@@ -63,10 +63,10 @@ b. Pydoc in new methods lists version(s) of WebSphere Application Server tested.
  
 5. Submission Process
 ----------------------------
-a. Contributors send a copy of their Contributor License Agreement to
-the wsadminlib community leader.
+a. Contributors send a copy of their Contributor License Agreement to the
+wsadminlib community leader, along with their github ID.
 
-b. Initially, all contributions are emailed to the community leader
+b. Initially, all contributions are emailed to the wsadminlib community leader
 for evaluation, socialization, and acceptance.
  
 c. As the number of trusted committers grows, contributions will be posted to

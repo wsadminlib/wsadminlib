@@ -45,9 +45,6 @@ execfile('wsadminlib.py') every time you save this file.
 
 Coding Standards
 ----------------
-0. Keep one master copy of wsadminlib. Don't fork off and enhance your own copy.
-   Why? The long-term benefit of sharing outweighs the short-term pain of coordinating.
-
 1. Don't change existing method signatures without talking to existing users.
    Why? Other consumers are using these methods in production.
 
@@ -98,9 +95,6 @@ try:
     AdminTask = sys._getframe(1).f_locals['AdminTask']
 except:
     print "Warning: Caught exception accessing Admin objects. Continuing."
-
-# Print SVN file and version information.
-print "$Id: wsadminlib.py 115 2011-01-03 15:51:00Z dingsor $"
 
 # Define False, True
 (False,True)=(0,1)
@@ -239,24 +233,36 @@ def getClusterId(clustername):
     TODO: get rid of either this or getServerClusterByName"""
     return getServerClusterByName(clustername)
 
-def createCluster( cellname, clustername, createReplicationDomain = False ):
+def createCluster( cellname, clustername, createReplicationDomain = False, nodeScopedRouting = False ):
     """Create a new cluster without a cluster member. Return its id.
-    If createReplicationDomain is True, create a replication domain for it."""
+    If createReplicationDomain is True, create a replication domain for it,
+    and if nodeScopedRouting is True, enable node-scoped routing
+    optimization within the cluster."""
     m = "createCluster:"
-    sop(m,"Entry. cellname=%s clustername=%s createReplicationDomain=%s" % ( cellname, clustername, createReplicationDomain ))
-    if createReplicationDomain:
-        sop(m,'Calling AdminTask.createCluster([-clusterConfig [-clusterName %s] -replicationDomain [-createDomain true]]' % clustername)
-        return AdminTask.createCluster('[-clusterConfig [-clusterName %s] -replicationDomain [-createDomain true]]' % clustername)
-    else:
-        sop(m,'Calling AdminTask.createCluster([-clusterConfig [-clusterName %s]]' % clustername)
-        return AdminTask.createCluster('[-clusterConfig [-clusterName %s]]' % clustername)
+    sop(m,"Entry. cellname=%s clustername=%s createReplicationDomain=%s nodeScopedRouting=%s" % ( cellname, clustername, createReplicationDomain, nodeScopedRouting ))
 
-def createServerInCluster( clustername, nodename, servername,sessionReplication = False):
+    # Check input.
+    if (False != createReplicationDomain and True != createReplicationDomain):
+        raise m + " Error. createReplicationDomain must be True or False. createReplicationDomain=%s" % repr(createReplicationDomain)
+    if (False != nodeScopedRouting and True != nodeScopedRouting):
+        raise m + " Error. nodeScopedRouting must be True or False. nodeScopedRouting=%s" % repr(nodeScopedRouting)
+
+    # Convert to a string value.
+    preferLocal = nodeScopedRouting and 'true' or 'false'
+
+    if createReplicationDomain == True:
+        sop(m,'Calling AdminTask.createCluster([-clusterConfig [-clusterName %s -preferLocal %s] -replicationDomain [-createDomain true]]' % (clustername, preferLocal))
+        return AdminTask.createCluster('[-clusterConfig [-clusterName %s -preferLocal %s] -replicationDomain [-createDomain true]]' % (clustername, preferLocal))
+    else:
+        sop(m,'Calling AdminTask.createCluster([-clusterConfig [-clusterName %s -preferLocal %s]]' % (clustername, preferLocal))
+        return AdminTask.createCluster('[-clusterConfig [-clusterName %s -preferLocal %s]]' % (clustername, preferLocal))
+
+def createServerInCluster( clustername, nodename, servername, sessionReplication = False):
     """Create a new server in a cluster, return its id.
     Turn on session replication if sessionReplication is True"""
     m = "createServerInCluster:"
     sop(m,"Entry. clustername=%s nodename=%s servername=%s sessionReplication=%s" % ( clustername, nodename, servername, sessionReplication ))
-    if sessionReplication:
+    if sessionReplication == True:
         sop(m,'Calling AdminTask.createClusterMember([-clusterName %s -memberConfig[-memberNode %s -memberName %s -memberWeight 2 -replicatorEntry true]])' % (clustername,nodename,servername))
         AdminTask.createClusterMember('[-clusterName %s -memberConfig[-memberNode %s -memberName %s -memberWeight 2 -replicatorEntry true]]' % (clustername,nodename,servername))
     else:
@@ -310,6 +316,8 @@ def stopCluster( clustername ):
     sop(m,"Stop cluster %s" % clustername)
     cellname = getCellName()    # e.g. 'poir1Cell01'
     cluster = AdminControl.completeObjectName( 'cell=%s,type=Cluster,name=%s,*' % ( cellname, clustername ) )
+    if cluster == '':
+        return None
     state = AdminControl.getAttribute( cluster, 'state' )
     if state != 'websphere.cluster.partial.stop' and state != 'websphere.cluster.stopped':
         AdminControl.invoke( cluster, 'stop' )
@@ -1184,7 +1192,7 @@ def stopAllBusinessProcessTemplatesForApplication(nodeName, serverName, applicat
     lTemplates = listAllBusinessProcessTemplatesForApplication(applicationName)
     sop(m,"Found Templates: %s" % lTemplates)
     for template in lTemplates:
-    	if force:
+        if force:
             sop(m, "Forceably stopping and deleting instances of process template %s on server %s on node %s:" % (template, serverName, nodeName))
         else:
             sop(m, "Stopping process template %s on server %s on node %s:" % (template, serverName, nodeName))
@@ -1513,7 +1521,7 @@ def createProxyVirtualHostAction( pvhc_id, action ):
     actionType = action['type']
 
     # Temporarily remove the 'type' key-value pair from the action dictionary.
-    # This is because we use 'type' in fritz, but it is not recognized by the proxy.
+    # It is not recognized by the proxy.
     del action['type']
     # sop(m,"Removed action type from dictionary. actionType=%s action=%s" % ( actionType, repr(action) ))
 
@@ -1590,7 +1598,7 @@ def createProxyVirtualHostSettings( pvh_id, pvh_settings, ):
         return
 
     # Temporarily remove 'local_error_page_policy' from the pvh_settings dictionary.
-    # This is because we use it in fritz, but it is not recognized by the proxy.
+    # It is not recognized by the proxy.
     lepp = None
     if 'local_error_page_policy' in pvh_settings.keys():
         lepp = pvh_settings['local_error_page_policy']
@@ -1598,7 +1606,7 @@ def createProxyVirtualHostSettings( pvh_id, pvh_settings, ):
         del pvh_settings['local_error_page_policy']
 
     # Temporarily remove 'custom_error_page_policy' from the pvh_settings dictionary.
-    # This is because we use it in fritz, but it is not recognized by the proxy.
+    # It is not recognized by the proxy.
     cepp = None
     if 'custom_error_page_policy' in pvh_settings.keys():
         cepp = pvh_settings['custom_error_page_policy']
@@ -1614,7 +1622,7 @@ def createProxyVirtualHostSettings( pvh_id, pvh_settings, ):
     # Create local error page policy
     if None != lepp:
         # Temporarily remove 'error_mappings' from the lepp dictionary.
-        # This is because we use it in fritz, but it is not recognized by the proxy.
+        # It is not recognized by the proxy.
         error_mappings = None
         if 'error_mappings' in lepp.keys():
             error_mappings = lepp['error_mappings']
@@ -2194,6 +2202,28 @@ def setServletCaching( nodename, servername, enabled, ):
     result = AdminConfig.modify(webcontainer, [['enableServletCaching', enabled]])
     #sop(m,"Exit. result=%s" % ( repr(result), ))
 
+def setNumAsyncTimerThreads( nodename, servername, numberThreads, ):
+    """Setting number of async timer threads."""
+    m = "setNumAsyncTimerThreads:"
+    #sop(m,"Entry. Setting number of async timer threads. nodename=%s servername=%s numberThreads=%s" % ( repr(nodename), repr(servername), repr(numberThreads) ))
+    server_id = getServerByNodeAndName( nodename, servername )
+    #sop(m,"server_id=%s " % ( repr(server_id), ))
+    webcontainer = AdminConfig.list('WebContainer', server_id)
+    #sop(m,"webcontainer=%s " % ( repr(webcontainer), ))
+    result = AdminConfig.modify(webcontainer, [['numberAsyncTimerThreads', numberThreads]])
+    #sop(m,"Exit. result=%s" % ( repr(result), ))
+
+def setUseAsyncRunnableWorkManager( nodename, servername, useAsyncRunnableWorkManager, ):
+    """Sets whether to use the work manager for async runnables."""
+    m = "setUseAsyncRunnableWorkManager:"
+    #sop(m,"Entry. Sets whether to use the work manager for async runnables. nodename=%s servername=%s useAsyncRunnableWorkManager=%s" % ( repr(nodename), repr(servername), repr(useAsyncRunnableWorkManager) ))
+    server_id = getServerByNodeAndName( nodename, servername )
+    #sop(m,"server_id=%s " % ( repr(server_id), ))
+    webcontainer = AdminConfig.list('WebContainer', server_id)
+    #sop(m,"webcontainer=%s " % ( repr(webcontainer), ))
+    result = AdminConfig.modify(webcontainer, [['useAsyncRunnableWorkManager', useAsyncRunnableWorkManager]])
+    #sop(m,"Exit. result=%s" % ( repr(result), ))
+
 def setPortletCaching( nodename, servername, enabled, ):
     """Enables portlet caching in the webcontainer for the specified server."""
     m = "setPortletCaching:"
@@ -2332,6 +2362,7 @@ def setFlushToDisk(nodename, servername, enabled):
     #sop(m,"dynacache=%s " % ( repr(dynacache), ))
     AdminConfig.modify(dynacache, [['flushToDiskOnStop', enabled]])
     #sop(m,"Exit.")
+
 ############################################################
 # webserver and plugin related methods
 
@@ -3536,6 +3567,24 @@ def startApplicationOnCluster(appname,clustername):
         startApplicationOnServer(appname,nodename,servername)
     sop(m,"Exit.")
 
+def isApplicationReady(appname):
+    """Returns True when app deployment is complete and ready to start.
+       Returns False when the app is not ready or is not recognized.
+       This method indicates when background processing is complete
+       following an install, save, and sync.   
+       This method is useful when installing really large EARs."""
+    m = "isApplicationReady:"
+    rc = False
+    try:
+        if 'true' == AdminApp.isAppReady(appname):
+            sop(m,"App %s is READY. Returning True." % (appname))
+            rc = True
+        else:
+            sop(m,"App %s is NOT ready. Returning False." % (appname))
+    except:
+        sop(m,"App %s is UNKNOWN. Returning False." % (appname))
+    return rc
+
 def stopApplicationOnCluster(appname,clustername):
     """Stops the named application on all servers in named cluster"""
     m = "stopApplicationOnCluster:"
@@ -3951,9 +4000,7 @@ def getServerVersion(nodename,servername):
 
 def parseVersion(stringVersion):
     """Parses a version string like "6.1.0.3" and
-       returns a python list of ints like [ 6,1,0,3 ]
-
-       This method was ported from FritzUtils.java"""
+       returns a python list of ints like [ 6,1,0,3 ]"""
     m = "parseVersion:"
     # sop(m,"Entry. stringVersion=%s" % ( stringVersion ))
     listVersion = []
@@ -3966,44 +4013,34 @@ def parseVersion(stringVersion):
 
 def compareIntLists(a, b):
     """Compares two python lists containing ints.
+       Handles arrays of different lengths by padding with zeroes.
+       Returns -1 if array a is less than array b. For example,
+          [6,0,0,13] < [6,1]
+       Returns 0 if they're the same.  For example,
+           [7,0] = [7,0,0,0]
+       Returns +1 if array a is greater than array b.  For example,
+           [8,0,0,12] > [8,0,0,11]
+       Note: This method was fixed and completely rewritten 2011-0121"""
+    m = "compareIntLists:"
+    sop(m,"Entry. a=%s b=%s" % ( a, b, ))
+    # Make both arrays the same length. Pad the smaller array with trailing zeroes.
+    while (len(a) < len(b)):
+        a.append(0)
+    while (len(b) < len(a)):
+        b.append(0)
 
-       Returns -1 if array a sorts before array b.
-       Returns 0 if they're the same.
-       Returns +1 if array a sorts after array b.
+    # Compare each element in the arrays.
+    rc = cmp(a,b)
 
-       This method was ported from FritzUtils.java"""
-    m = "compareIntArrays:"
-    # sop(m,"Entry. a=%s b=%s" % ( a, b, ))
-
-    i = 0
-    while (i<len(a) and i<len(b)):
-        if (a[i] < b[i]):
-            # sop(m,"Exit 1. a[i]<b[i]. i=%i a[i]=%i b[i]=%i" % ( i, a[i], b[i] ))
-            return -1
-        if (a[i] > b[i]):
-            # sop(m,"Exit 2. a[i]>b[i]. i=%i a[i]=%i b[i]=%i" % ( i, a[i], b[i] ))
-            return 1
-        # No decision yet.
-        i = i + 1
-    # So far, still the same... is one longer? it goes later.
-    if (len(a) < len(b)):
-        # sop(m,"Exit 3. len(a)<len(b). len(a)=%i len(b)=%i" % ( len(a), len(b) ))
-        return -1
-    if (len(a) > len(b)):
-        # sop(m,"Exit 4. len(a)>len(b). len(a)=%i len(b)=%i" % ( len(a), len(b) ))
-        return -1
-    # sop(m,"Exit 5. a=b. Returning zero.")
-    return 0;
+    sop(m,"Exit. Returning %i" % ( rc ))
+    return rc
 
 def versionAtLeast(nodename, stringVersion):
     """Returns true if the version we're running is greater than or equal to the version passed in.
 
        For example, pass in '6.1.0.13.
        If we're running 6.1.0.13, or 7.0.0.0, it returns true.
-       If we're running 6.1.0.12, it returns false.
-
-       This method was ported from FritzUtils.java"""
-
+       If we're running 6.1.0.12, it returns false."""
     # m = "versionAtLeast:"
     # sop(m,"Entry. nodename=%s stringVersion=%s" % (nodename,stringVersion))
     x = compareIntLists(parseVersion(getNodeVersion(nodename)),parseVersion(stringVersion))
@@ -4182,6 +4219,13 @@ def waitForJobSuccess(jobToken,timeoutSecs):
 def getNodeHostname(nodename):
     """Get the hostname of the named node"""
     return AdminConfig.showAttribute(getNodeId(nodename),'hostName')
+
+def getShortHostnameForProcess(process):
+    nodename = getNodeNameForProcess(process)
+    hostname = getNodeHostname(nodename)
+    if hostname.find('.') != -1:
+        hostname = hostname[:hostname.find('.')]
+    return hostname
 
 def findNodeOnHostname(hostname):
     """Return the node name of a (non-dmgr) node on the given hostname, or None"""
@@ -4395,7 +4439,7 @@ def getServerJvmByRegion(nodename,servername,region):
         return _splitlist(AdminConfig.showAttribute(pdef, 'jvmEntries'))[0]
 
 def createJvmPropertyByRegion(nodename,servername,region,name,value):
-    jvm = getServerJvmByRegion(nodename,servername,region) 
+    jvm = getServerJvmByRegion(nodename,servername,region)
     attrs = []
     attrs.append( [ 'name', name ] )
     attrs.append( ['value', value] )
@@ -4414,6 +4458,14 @@ def getServerJvm(nodename,servername):
             break
     if pdef: # found Java ProcessDef
         return _splitlist(AdminConfig.showAttribute(pdef, 'jvmEntries'))[0]
+
+def getServerServantJvm(nodename,servername):
+    """Return the config ID of the JVM object for this server"""
+    server_id = getServerId(nodename,servername)
+    # the pdefs come back as a string [item item item]
+    #pdefs = _splitlist(AdminConfig.showAttribute(server_id, 'processDefinitions'))
+    pdefs = AdminConfig.list('JavaVirtualMachine', server_id)
+    return pdefs.splitlines()[1]
 
 def getServerJvmExecution(nodename,servername):
     """Return the config ID of the JVM execution object  for this server"""
@@ -4538,10 +4590,14 @@ Some useful examples:
 
 def removeJvmProperty(nodename,servername,propertyname):
     jvm = getServerJvm(nodename,servername)
+    if getNodePlatformOS(nodename) == "os390":
+        jvm = getServerServantJvm(nodename,servername)
     findAndRemove('Property', [['name', propertyname]], jvm)
 
 def createJvmProperty(nodename,servername,name,value):
     jvm = getServerJvm(nodename,servername)
+    if getNodePlatformOS(nodename) == "os390":
+        jvm = getServerServantJvm(nodename,servername)
     attrs = []
     attrs.append( [ 'name', name ] )
     attrs.append( ['value', value] )
@@ -4819,6 +4875,36 @@ def hostAliasExists( virtualhostname, aliashostname, port ):
                 return 1
     return 0
 
+def getHostAliasID( virtualhostname, aliashostname, port ):
+    """Returns the ID string for the specified host alias, if it exists.
+    Returns None if it does not exist.      
+    Parms:  virtualhostname: "default_host", or "proxy_host", or etc.
+            aliashostname:  "*", "fred", "fred.raleigh.ibm.com", etc
+            port:  either a string or int: 5060, "5061", etc. """
+    m = "getHostAliasID:"
+    sop(m,"Entry. virtualhostname=%s aliashostname=%s port=%s" % ( virtualhostname, aliashostname, repr(port) ))
+    host_id = getVirtualHostByName( virtualhostname )
+    if host_id == None:
+        sop(m,"Exit. Virtualhostname %s does not exist. Returning None." % ( virtualhostname ))
+        return None   # can't exist, no such virtual host
+    port = "%d" % int(port)   # force port to be a string
+    aliases = AdminConfig.showAttribute( host_id, 'aliases' )
+    #sop(m,"aliases=%s" % ( repr(aliases) ))
+    aliases = aliases[1:-1].split( ' ' )
+    #sop(m,"after split, aliases=%s" % ( repr(aliases) ))
+    for alias in aliases:
+        #sop(m,"Considering alias=%s" % ( repr(alias) ))
+        if alias != None and alias != '':
+            # Alias is a HostAlias object
+            h = AdminConfig.showAttribute( alias, 'hostname' )
+            p = AdminConfig.showAttribute( alias, 'port' )
+            if aliashostname == h and port == p :
+                # We're good - found what we need
+                sop(m,"Exit. Found host alias. Returning id=%s" % ( alias ))
+                return alias
+    sop(m,"Exit. Did not find host alias. Returning None.")
+    return None
+
 def addHostAlias( virtualhostname, aliashostname, port ):
     """Add new host alias"""
     # Force port to be a string - could be string or int on input
@@ -4889,6 +4975,11 @@ def deleteHostAlias( virtualhostname, aliashostname, port ):
     else:
         sop(m,"host_id not found.")
     sop(m,"Exit. Warning: Nothing deleted. virtualhostname=%s aliashostname=%s port=%s" % ( repr(virtualhostname), repr(aliashostname), repr(port) ))
+
+def deleteAndEnsureHostAlias( virtualhostname, aliashostname, port ):
+    """Convenience method calls delete and ensure."""
+    deleteHostAlias( virtualhostname, aliashostname, port )
+    ensureHostAlias( virtualhostname, aliashostname, port )
 
 def deleteAllHostAliases( virtualhostname ):
     """Deletes all host aliases for the given virtual host name.  Don't try it with admin_host."""
@@ -5271,6 +5362,15 @@ def setChannelCustomProperty(nodename, servername, name, value, channelType, end
     # Does not exist, create and set
     p = AdminConfig.create('Property', foundChannel, [['name', name],['value', value]])
 
+def getSipContainerCustomProperty(nodename, servername, propname):
+    """Returns the Value of the specified custom property of the SIP Container, or None if there is none by that name."""
+    m = "getSipContainerCustomProperty:"
+    sop(m,"Entry. nodename=" + nodename + " servername=" + servername + " propname=" + propname)
+    server_id = getServerId(nodename,servername)
+    container_id = AdminConfig.list('SIPContainer', server_id)
+    propvalue = getObjectCustomProperty(container_id, propname)
+    sop(m,"Exit. Returning propvalue=" + propvalue)
+    return propvalue
 
 def setSipContainerCustomProperty(nodename, servername, propname, propvalue):
     sop("setSipContainerCustomProperty", "Setting custom sip property %s=%s" % (propname,propvalue))
@@ -5369,14 +5469,15 @@ def setCustomPropertyOnObject(object_id, propname, propvalue):
         # Need to create property
         AdminConfig.modify(object_id, [['properties', [[['name', propname], ['value', propvalue]]]]])
 
-def setServerPMI(nodename, servername, enable, initialSpecLevel):
+def setServerPMI(nodename, servername, enable, initialSpecLevel, syncUpdate):
     """Set the PMI settings for a given server.
-    enabled should be 'true' or 'false'."""
+    enabled should be 'true' or 'false'.
+    syncUpdate should be 'true' or 'false'."""
     server_id = getServerId(nodename,servername)
     if not server_id:
         raise "COULD NOT LOCATE SERVER: node=%s, name=%s" % (nodename,servername)
     pmi = AdminConfig.list('PMIService', server_id)
-    AdminConfig.modify(pmi, [['enable', enable], ['initialSpecLevel', initialSpecLevel]])
+    AdminConfig.modify(pmi, [['synchronizedUpdate', syncUpdate],['enable', enable], ['statisticSet', initialSpecLevel]])
 
 def setServerPMIforDynacache(nodename, servername, enable, initialSpecLevel):
     """Set the PMI settings for a given server.
@@ -6158,6 +6259,7 @@ def configureJPAService (nodename, servername, persistenceProvider, JTADSJndiNam
 
 ############################################################
 # Shared Library and Class Loader methods
+
 def createSharedLibrary(libname, jarfile):
     """Creates a shared library on the specified cell with the given name and jarfile"""
     m = "createSharedLibrary:"
@@ -6278,11 +6380,12 @@ def deleteAllClassloaders(nodename, servername):
     #sop(m,"appserver=%s " % ( repr(appserver), ))
     classloaders = AdminConfig.showAttribute(appserver, 'classloaders')[1:-1].split(' ')
     #sop(m,"classloaders=%s " % ( repr(classloaders), ))
-    # FRITZ_TODO: this seems like a hack, figure out how to get this to work without it. ashank
+    # TODO: this seems like a hack, figure out how to get this to work without it.
     if classloaders[0] != '':
         for classloader in classloaders:
             AdminConfig.remove(classloader)
     #sop(m,"Exit. ")
+
 ###############################################################################
 # Custom Service methods
 
@@ -6555,13 +6658,11 @@ def createWebContainerProp(nodename,servername,name,value):
     return removeAndCreate('Property', wc, attrs, ['name'])
 
 def configureWebContainerMBeanStopTransports(nodename,servername):
-    server_type = AdminConfig.getid('/Server:'+servername+'/')
-    mbean = AdminControl.completeObjectName('WebSphere:*,type=WebContainer,cell='+getCellName()+',node='+nodename+',process='+server_type)
+    mbean = AdminControl.completeObjectName('WebSphere:*,type=WebContainer,cell='+getCellName()+',node='+nodename+',process='+servername)
     AdminControl.invoke(mbean,'stopTransports')
 
 def configureWebContainerMBeanStartTransports(nodename,servername):
-    server_type = AdminConfig.getid('/Server:'+servername+'/')
-    mbean = AdminControl.completeObjectName('WebSphere:*,type=WebContainer,type=WebContainer,cell='+getCellName()+',node='+nodename+',process='+server_type)
+    mbean = AdminControl.completeObjectName('WebSphere:*,type=WebContainer,cell='+getCellName()+',node='+nodename+',process='+servername)
     AdminControl.invoke(mbean,'startTransports')
 
 def modifyUrlRewriting(nodename,servername,enabled):
@@ -6631,52 +6732,6 @@ def emptyString(strng):
     if None == strng or "" == strng:
         return True
     return False
-
-##############################################################################
-# Invocation argument methods
-
-def getArgConfigfile():
-    """Helper method returns the specified invocation argument."""
-    m = 'getArgConfigFile'
-    sop(m,"ENTRY, sys.argv=%s" % repr(sys.argv))
-
-    FritzConfigurationFile = 'fritzconfig.sh'
-    opt_list = ['configfile=']
-
-    # Add any unexpected arguments to the option list
-    # This way we can pass additional arguments to configure scripts
-    # if we need to
-    for a in sys.argv:
-        if a.startswith("--"):
-            if -1 != a[2:].find("="):
-                (name,value) = a[2:].split("=")
-            else:
-                name = a[2:]
-                value = None
-            found = False
-            for o in opt_list:
-                if o == name or o == "%s=" % name:
-                    found = True
-                    break
-            if not found:
-                if value:
-                    opt_list.append("%s=" % name)
-                else:
-                    opt_list.append(name)
-
-    sop(m,"opt_list=%s" % repr(opt_list))
-    optlist, args = getopt.getopt(sys.argv,
-                                  '',
-                                  opt_list
-                                   )
-    sop(m,"optlist=%s" % repr(optlist))
-    for o,a in optlist:
-        print o,a
-        if o == '--configfile':
-            FritzConfigurationFile = a
-
-    sop(m,"EXIT, config file = %s" % FritzConfigurationFile)
-    return FritzConfigurationFile
 
 ##############################################################################
 # Trust Association
@@ -7173,7 +7228,7 @@ def addAppSrvCompUnit(blaname,assetname,assetversion,proxyname,cellname,nodename
     # Left it in the method's arg list to avoid breaking users of this method.
     m = "addAppSrvCompUnit"
     sop(m,"ENTRY")
-    arg = '-blaID %s -cuSourceID assetname=%s -CUOptions [[WebSphere:blaname=%s WebSphere:assetname=%s %s "" 1 false DEFAULT]] -MapTargets [[.* %s]] -CustomAdvisorCUOptions [["type=AppServer,cellName=%s,nodeName=%s,serverName=%s,applicationName=%s" "" %s "" "" "" ""]]' % (blaname,assetname,blaname,assetname,assetname,proxyname,cellname,nodename,servername,applicationname,enableLogging)
+    arg = '-blaID %s -cuSourceID assetname=%s -CUOptions [[WebSphere:blaname=%s WebSphere:assetname=%s %s "" 1 false DEFAULT ""]] -MapTargets [[.* %s]] -CustomAdvisorCUOptions [[type=AppServer,cellName=%s,nodeName=%s,serverName=%s,applicationName=%s,isEnableLogging=%s]]' % (blaname, assetname,blaname,assetname,assetname, proxyname,cellname,nodename,servername,applicationname,enableLogging)
     try:
         AdminTask.addCompUnit(arg)
     except:
@@ -7187,7 +7242,7 @@ def addClusterCompUnit(blaname,assetname,assetversion,proxyname,cellname,cluster
     # NOTE: not using assetversion - no longer required and appears to cause addCompUnit to fail.
     # Left it in the method's arg list to avoid breaking users of this method.
     m = "addClusterCompuUnit"
-    arg = '-blaID %s -cuSourceID assetname=%s -CUOptions [[WebSphere:blaname=%s WebSphere:assetname=%s %s "" 1 false DEFAULT]] -MapTargets [[.* %s]] -CustomAdvisorCUOptions [["type=Cluster,clusterName=%s,cellName=%s,applicationName=%s" "" %s "" "" "" ""]]' % (blaname,assetname,blaname,assetname,assetname,proxyname,clustername,cellname,applicationname,enableLogging)
+    arg = '-blaID %s -cuSourceID assetname=%s -CUOptions [[WebSphere:blaname=%s WebSphere:assetname=%s %s "" 1 false DEFAULT ""]] -MapTargets [[.* %s]] -CustomAdvisorCUOptions [[type=Cluster,clusterName=%s,cellName=%s,applicationName=%s,isEnableLogging=%s]]' % (blaname,assetname, blaname,assetname,assetname, proxyname,clustername,cellname,applicationname,enableLogging)
     sop(m,"AdminTask.addCompUnit(%s)" % repr(arg))
     try:
         AdminTask.addCompUnit(arg)
@@ -8495,6 +8550,8 @@ def setSecurityProperty ( propName, propValue ):
                 print "Done!"
         #endElse
 #endDef
+
+##########################################
 # Web Services Feature Pack
 
 def createPolicySetAttachment(applicationName, psName, resource, attachmentType):
@@ -8667,7 +8724,7 @@ def _create( type, parent, attrs, objectKeyNames, parentAttrName, template ):
     else:
         if template:
             sop(m, 'AdminConfig.create(%s, %s, %s, %s)' % (repr(type), repr(parent), repr(attrs), repr(template)))
-            object=AdminConfig.create(type, parent, attrs, template)
+            object=AdminConfig.createUsingTemplate(type, parent, attrs, template)
         else:
             sop(m, 'AdminConfig.create(%s, %s, %s)' % (repr(type), repr(parent), repr(attrs)))
             object=AdminConfig.create(type, parent, attrs)
@@ -9066,26 +9123,22 @@ def createCMPConnectorFactory ( scope, clusterName, nodeName, serverName, dataSo
 # Java Mail procedures
 
 def createMailProvider ( scope, nodeName, serverName, clusterName, providerName, providerDesc):
-
-    #----------------------------------------------------------------------------
-    # Create Mail Provider
-    #----------------------------------------------------------------------------
+    """Creates a mail provider resource in set scope
+    Should return error 99 if creation fails, otherwise if provider already exists, no error
+    Returns the provider object it just created or already found
+    """
 
     global AdminConfig
 
     m = "createMailProvider:"
-    sop(m, "Create Mail Provider '+providerName+', if it does not exist")
-
-    # scope doesn't exist
-
-    # node doesn't exist
+    sop(m, "Create Mail Provider "+providerName+", if it does not exist")
 
     # Check if mail provider already exists
     provider = getCfgItemId (scope, clusterName, nodeName, serverName, 'MailProvider', providerName)
 
     if (provider != ''):
         sop (m, "Provider "+providerName+" already exists!!")
-        return
+        return provider
     #endif
 
     parentId = getScopeId (scope, serverName, nodeName, clusterName)
@@ -9094,44 +9147,34 @@ def createMailProvider ( scope, nodeName, serverName, clusterName, providerName,
     attrs.append(["name", providerName])
     attrs.append(["description", providerDesc])
 
-    try:
-        _excp_ = 0
-        provider1 = AdminConfig.create("MailProvider", parentId, attrs )
-    except:
-        _type_, _value_, _tbck_ = sys.exc_info()
-        provider1 = `_value_`
-        _excp_ = 1
-    #endTry
-    if (_excp_ ):
-        sop (m, "Caught Exception creating Mail Provider "+provider1)
-        return
-    #endIf
+    provider = AdminConfig.create("MailProvider", parentId, attrs )
 
-    sop (m, "Created "+providerName+" successfully.") # some reason this screws up
-    return provider1
+    if provider == '':
+        sop (m, "Caught Exception creating Mail Provider "+provider)
+        return 99
+
+    sop (m, "Created "+providerName+" successfully.") 
+    return provider
 
 #endDef
 
 
 def createProtocolProvider( scope, nodeName, serverName, clusterName, provName, protocol, classPath, type, className ):
+    """Creates a protocol provider resource for set scope
+    Should return error 99 if creation fails, or if mail provider to create protocol is not found
+    Returns protocol provider it created if successful
+    """
 
     m = "createProtocolProvider:"
-    sop (m, "Create Mail Protocol Provider '+protocol+', if it does not exist")
+    sop (m, "Create Mail Protocol Provider "+protocol+", if it does not exist")
 
-    provider = getCfgItemId (scope, clusterName, nodeName, serverName, 'MailProvider', provName)
+    mProvider = getCfgItemId (scope, clusterName, nodeName, serverName, 'MailProvider', provName)
 
     # Check if mail provider exists
-    if (provider == ''):
-        sop (m, "Provider "+provider+" doesn't exist!!")
-        return
+    if (mProvider == ''):
+        sop (m, "Provider "+mProvider+" doesn't exist!!")
+        return 99
     #endif
-
-    # Check if protocol already exists
-#    protoProv = AdminConfig.list('ProtocolProvider', provider)
-#    if (protoProv != ''):
-#        sop ("Protocol Provider "+protocol+" already exists!!")
-#        return
-#    #endif
 
     attrs = []
     attrs.append(["classpath", classPath])
@@ -9139,81 +9182,109 @@ def createProtocolProvider( scope, nodeName, serverName, clusterName, provName, 
     attrs.append(["classname", className])
     attrs.append(["protocol", protocol])
 
-    try:
-        _excp_ = 0
-        pProvider = AdminConfig.create('ProtocolProvider', provider, attrs)
-    except:
-        _type_, _value_, _tbck_ = sys.exc_info()
-        pProvider = `_value_`
-        _excp_ = 1
-        #endTry
-    if (_excp_ ):
-        sop (m, "Caught Exception creating protocol provider "+pProvider)
-        return
-        #endIf
+    pProvider = AdminConfig.create('ProtocolProvider', mProvider, attrs)
+
+    if pProvider == '':
+        sop (m, "Caught Exception creating protocol provider "+provName)
+        return 99
 
     sop (m, "Creation of protocol provider "+protocol+" was successful.")
     return pProvider
 
+def createMailSession( scope, nodeName, serverName, clusterName, provName, name, jndiName, desc, category, mailTransHost, mailTransProto, mailTransUserId, mailTransPasswd, enableParse, mailFrom, mailStoreHost, mailStoreProto, mailStoreUserId, mailStorePasswd, enableDebug ):
+    """ 
+    
+    This function creates a JavaMail MailSession under the specified Provider Name. 
 
-def createMailSession ( scope, nodeName, serverName, clusterName, provName, name, jndiName, desc, category, mailTransHost, mailTransProto, mailTransUserId, mailTransPasswd, enableParse, mailFrom, mailStoreHost, mailStoreProto, mailStoreUserId, mailStorePasswd, enableDebug ):
+        Input parameters:
+
+        scope               - The scope of the MailProvider. Valid values are (in order of preecendence): 'cell', 'node', 'cluster' and 'server'.
+                              Note: The scope of 'cell' is not valid for the createMailSession function. 
+        nodeName            - The name of the node of the MailProvider. Required if scope = 'node' or 'server'.
+        serverName          - The name of the server of the MailProvider. Required if scope = 'server'.
+        clusterName         - The name of the cluster of the MailProvider. Required if scope = 'cluster'.
+        provName            - The name of the MailProvider. Typical value: "Built-in Mail Provider".
+        name                - The required display name of the MailSession to be created.
+        jndiName            - The required JNDI of the MailSession to be created. 
+        desc                - An optional description of this MailSession.
+        category            - An optional category string to use when classifying or grouping the MailSession to be created. 
+        mailTransHost       - Specifies the server to connect to when sending mail.
+        mailTransProto      - Specifies the transport protocol to use when sending mail. Actual protocol values are defined in the protocol
+                              providers that you configured for the current mail provider.
+                              Typical Value: "builtin_smtp".
+        mailTransUserId     - Specifies the user id to use when the mail transport host requires authentication.
+        mailTransPasswd     - Specifies the password to use when the mail transport host requires authentication.
+        enableParse         - Enable strict internet address parsing. Set to "true" to enforce the RFC 822 syntax rules for parsing Internet addresses when sending mail.
+                              Valid values: "true" or "false". 
+        mailFrom            - Specifies the Internet e-mail address that is displayed in messages as the mail originator. Typical value: "".
+        mailStoreHost       - Specifies the mail account host, or domain name. Typical value: "".
+        mailStoreProto      - Specifies the protocol to use when receiving mail. Actual protocol values are defined in the protocol providers
+                              that you configured for the current mail provider.
+                              Typical Value: "builtin_pop3" or "builtin_imap".
+        mailStoreUserId     - Specifies the user ID of the mail account. Typical value: "".
+        mailStorePasswd     - Specifies the password of the mail account. Typical value: "".
+        enableDebug         - Enable debug information which shows interaction between the mail application and the mail servers,
+                              as well as the properties of this mail session. to be sent to the SystemOut.log file. 
+                              Valid values: "true" or "false". 
+
+        Return Value:
+            The newly created MailSession.  If an error occurs, an exception will be thrown.
+    """
 
     m = "createMailSession:"
-    sop(m, "Create Mail Session '+name+', if it does not exist")
+    sop(m, "Create Mail Session " + name + ", if it does not exist.")
 
-    trans = 'false'
-    store = 'false'
+    haveTransportProtocol = False
+    haveStoreProtocol = False
 
-    provider = getCfgItemId (scope, clusterName, nodeName, serverName, 'MailProvider', provName)
+    mailProvider = getCfgItemId(scope, clusterName, nodeName, serverName, 'MailProvider', provName)
+    sop(m, "MailProvider = " + repr(mailProvider))
 
     # Check if mail provider exists
-    if (provider == ''):
-        sop (m, "Provider "+provider+" doesn't exist!!")
-        return
+    if (mailProvider == ''):
+        sop (m, "Provider doesn't exist!!")
+        return None
     #endif
 
-    # Check if session already exists, this is assuming just 1 session, must put in list and tranverse
-#    session = AdminConfig.list('MailSession', provider)
-#    if (session != ''):
-#        sop (m, "Mail Session "+name+" already exists!!")
-#        return
-#    #endif
+    protocolProviders = getObjectsOfType('ProtocolProvider', mailProvider)
+    sop(m, "ProtocolProviders = " + repr(protocolProviders))
 
+    # Iterate through the list (horrible way to do it, but...) looking for matching mail transport and store protocols.
+    for protocolProvider in protocolProviders:
+        sop(m, "Iterating through protocolProviders. protocolProvider = " + repr(protocolProvider))
+        if -1 != protocolProvider.find(mailTransProto):
+            sop(m, "Matched Transport Provider: " + repr(mailTransProto) + " with " + repr(protocolProvider))
+            haveTransportProtocol = True
+            mailTransportProtocol = protocolProvider
+        if -1 != protocolProvider.find(mailStoreProto):
+            sop(m, "Matched Store Provider: " + repr(mailStoreProto) + " with " + repr(protocolProvider))
+            haveStoreProtocol = True
+            mailStoreProtocol = protocolProvider
+
+    # Now build the attribute list.
     attrs = []
     attrs.append(["name", name])
     attrs.append(["jndiName", jndiName])
     attrs.append(["description", desc])
     attrs.append(["category", category])
     attrs.append(["mailTransportHost", mailTransHost])
-    if (trans == 'true'):
-        attrs.append(["mailTransportProtocol", newmtp])
-    #endIf
+    if haveTransportProtocol:
+        attrs.append(["mailTransportProtocol", mailTransportProtocol])
     attrs.append(["mailTransportUser", mailTransUserId])
     attrs.append(["mailTransportPassword", mailTransPasswd])
     attrs.append(["strict", enableParse])
     attrs.append(["mailFrom", mailFrom])
     attrs.append(["mailStoreHost", mailStoreHost])
-    if (store == 'true'):
-        attrs.append(["mailStoreProtocol", newmsp])
-    #endIf
+    if haveStoreProtocol:
+        attrs.append(["mailStoreProtocol", mailStoreProtocol])
     attrs.append(["mailStoreUser", mailStoreUserId])
     attrs.append(["mailStorePassword", mailStorePasswd])
     attrs.append(["debug", enableDebug])
 
-    try:
-        _excp_ = 0
-        mSession = AdminConfig.create("MailSession", provider, attrs)
-    except:
-        _type_, _value_, _tbck_ = sys.exc_info()
-        mSession = `_value_`
-        _excp_ = 1
-        #endTry
-    if (_excp_ ):
-        sop(m, "Caught Exception creating mail session "+mSession)
-        return
-        #endIf
+    sop (m, "Creating mail session: " + repr(name) + " as a child of: " + repr(mailProvider) + " using attributes: " + repr(attrs)) 
+    mSession = AdminConfig.create("MailSession", mailProvider, attrs)
 
-    sop (m, "Creation of mail session "+name+" was successful.")
+    sop (m, "Creation of mail session " + name + " was successful! session = " + repr(mSession) )
     return mSession
 
 #endDef
@@ -9253,7 +9324,6 @@ def removeWebSphereVariable ( name, nodeName=None, serverName=None, clusterName=
 ###############################################################################
 # Core Group Management (changes introduced by CGB FAT - to be added to wsadminlib.py/wsat project)
 
-
 def removeCoreGroup ( name ):
     """Remove and existing Coregroup."""
     # create a new coregroup if the existing one is not found
@@ -9276,7 +9346,7 @@ def createBridgeInterface(cgap_id, nodeName, serverName, chainName):
     if len(matches)>0:
         result = matches[0]
     else:
-        result = create('BridgeInterface', cgap_id, attrs)
+        result = create('BridgeInterface', cgap_id, attrs, 'propertySet')
     return result
 
 
@@ -9389,7 +9459,6 @@ def configureARDTests(cellName, nodeName, serverName, jdbcProviderName, derbyDri
     createJAAS(dsAuthAliasName, dbuser, dbpassword)
     createDerbyDataSource(jdbcProviderID, datasourceJNDIName, dsAuthAliasName)
     configureServerARD(cellName, nodeName, serverName, "true", ardExecTO)
-
 
 ###############################################################################
 # Resource Environment Management
@@ -9727,7 +9796,6 @@ def isHPELEnabled (nodename, servername):
     #endif
 #endDef
 
-
 def configureHPEL (nodename, servername, enable, additionalParmsList=[]):
     """ This function configures High Performance Extensible Logging for the specified server.
 
@@ -9790,7 +9858,6 @@ def configureHPEL (nodename, servername, enable, additionalParmsList=[]):
         #endif
     #endif
 #endDef
-
 
 def configureHPELBinaryLog (nodename, servername, additionalParmsList):
     """ This function configures the HPEL Binary Log for the specified server.
@@ -9872,6 +9939,74 @@ def configureHPELBinaryLog (nodename, servername, additionalParmsList):
     #endif
 #endDef
 
+def getHPELBinaryLogAttribute(nodename, servername, attributename):
+    """ This function returns an attribute of the HPEL Binary Log for the specified server.
+
+        Function parameters:
+
+        nodename - the name of the node on which the server to be configured resides.
+        servername - the name of the server whose HPEL Binary Log is to be configured.
+        attributename - the following attribute names can be specified:
+                              - 'dataDirectory' - Specifies the name of the directory where the HPEL logs
+                                                  will be stored.
+                              - 'bufferingEnabled' - Specifies whether or not log record buffering should
+                                                     be enabled.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchEnabled' - Specifies whether or not a new log file should be
+                                                      started each day.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchTime' - If 'fileSwitchEnabled' is set to 'true', this field
+                                                   specifies the time that new log file should be started.
+                                                   A value from 0 - 23 should be specified. A value of 0
+                                                   means 12 AM 1 means 1 AM, 2 means 2 AM, ..., 23 means
+                                                   11 PM.  If a value greater than 23 is entered, this
+                                                   field will be set to 0 (12 AM).
+                              - 'outOfSpaceAction' - Specifies which action to take if the hard disk runs
+                                                     out of space.  Valid values are 'StopLogging',
+                                                     'StopServer', and 'PurgeOld'.
+                              - 'purgeBySizeEnabled' - Specifies whether or not to purge the logs based
+                                                       on size.  Valid values are 'true' and 'false'.
+                              - 'purgeByTimeEnabled' - Specifies whether or not to purge the logs based
+                                                       on time.  Valid values are 'true' and 'false'.
+                              - 'purgeMaxSize' - Specifies the maximum total size of the logs (in MB).
+                              - 'purgeMinTime' - Specifies the minimum amount of time to keep the logs
+                                                 (in hours).
+    """
+
+    m = "getHPELBinaryLogAttribute:"
+    sop (m, "Entering function...")
+
+    sop (m, "Calling getNodeId() with nodename = %s." % (nodename))
+    nodeID = getNodeId(nodename)
+    sop (m, "Returned from getNodeID; returned nodeID = %s" % nodeID)
+
+    if nodeID == "":
+        raise "Could not find node name '%s'" % (nodename)
+    else:
+        sop (m, "Calling getServerId() with nodename = %s and servername = %s." % (nodename, servername))
+        serverID = getServerId(nodename, servername)
+        sop (m, "Returned from getServerID; returned serverID = %s" % serverID)
+
+        if serverID == None:
+            raise "Could not find server '%s' on node '%s'" % (servername, nodename)
+        else:
+            serviceName = "HighPerformanceExtensibleLogging"
+
+            sop (m, "Calling AdminConfig.list with serviceName = %s and serverID = %s." % (serviceName, serverID))
+            HPELID = AdminConfig.list(serviceName, serverID)
+            sop (m, "Returned from AdminConfig.list; HPELID = %s" % HPELID)
+
+            sop (m, "Calling AdminConfig.list to get the config ID of the HPEL Binary Log object.")
+            HPELLogID = AdminConfig.list("HPELLog", HPELID)
+            sop (m, "Returned from AdminConfig.list; HPELLogID = %s" % HPELLogID)
+
+            sop(m, "Calling AdminConfig.showAttribute to get the value of attribute = %s" % ( attributename ))
+            attributevalue = AdminConfig.showAttribute(HPELLogID, attributename)
+            sop (m, "Returned from AdminConfig.showAttribute; attributevalue = %s" % ( attributevalue ))
+
+            sop (m, "Exiting function...")
+            return attributevalue
+        #endif
+    #endif
+#endDef
 
 def configureHPELTextLog (nodename, servername, additionalParmsList):
     """ This function configures HPEL Text Logging for the specified server.
@@ -9965,6 +10100,86 @@ def configureHPELTextLog (nodename, servername, additionalParmsList):
     #endif
 #endDef
 
+def getHPELTextLogAttribute(nodename, servername, attributename):
+    """ This function returns an attribute of the HPEL Text Log for the specified server.
+
+        Function parameters:
+
+        nodename - the name of the node on which the server to be configured resides.
+        servername - the name of the server whose HPEL Text Logging is to be configured.
+        attributename - the following attribute names can be specified:
+                              - 'enabled' - Specifies whether or not writing to the text log has been
+                                            enabled.  Valid values are 'true' and 'false'.
+                              - 'dataDirectory' - Specifies the name of the directory where the HPEL
+                                                  text logs will be stored.
+                              - 'bufferingEnabled' - Specifies whether or not log record buffering should
+                                                     be enabled.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchEnabled' - Specifies whether or not a new text log file should be
+                                                      started each day.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchTime' - If 'fileSwitchEnabled' is set to 'true', this field
+                                                   specifies the time that new log file should be started.
+                                                   A value from 0 - 23 should be specified. A value of 0
+                                                   means 12 AM 1 means 1 AM, 2 means 2 AM, ..., 23 means
+                                                   11 PM.  If a value greater than 23 is entered, this
+                                                   field will be set to 0 (12 AM).
+                              - 'minimumLevel' - Specifies the minimum level of messages that should be
+                                                 included in the text log.  Valid values are 'INFO',
+                                                 'FINEST', 'FINER', 'FINE', 'DETAIL', 'CONFIG', 'AUDIT',
+                                                 'WARNING', 'SEVERE', and 'FATAL'.
+                              - 'outOfSpaceAction' - Specifies which action to take if the hard disk runs
+                                                     out of space.  Valid values are 'StopLogging',
+                                                     'StopServer', and 'PurgeOld'.
+                              - 'outputFormat' - Specifies the output format to use in the text log.
+                                                 Valid values are 'BASIC' and 'ADVANCED'.
+                              - 'purgeBySizeEnabled' - Specifies whether or not to purge the text logs based
+                                                       on size.  Valid values are 'true' and 'false'.
+                              - 'purgeByTimeEnabled' - Specifies whether or not to purge the text logs based
+                                                       on time.  Valid values are 'true' and 'false'.
+                              - 'purgeMaxSize' - Specifies the maximum total size of the text logs (in MB).
+                              - 'purgeMinTime' - Specifies the minimum amount of time to keep the text logs
+                                                 (in hours).
+                              - 'systemErrIncluded' - Specifies whether or not to include SystemErr information
+                                                      in the text log.  Valid values are 'true' and 'false'.
+                              - 'systemOutIncluded' - Specifies whether or not to include SystemOut information
+                                                      in the text log.  Valid values are 'true' and 'false'.
+    """
+
+    m = "getHPELTextLogAttribute:"
+    sop (m, "Entering function...")
+
+    sop (m, "Calling getNodeId() with nodename = %s." % (nodename))
+    nodeID = getNodeId(nodename)
+    sop (m, "Returned from getNodeID; returned nodeID = %s" % nodeID)
+
+    if nodeID == "":
+        raise "Could not find node name '%s'" % (nodename)
+    else:
+        sop (m, "Calling getServerId() with nodename = %s and servername = %s." % (nodename, servername))
+        serverID = getServerId(nodename, servername)
+        sop (m, "Returned from getServerID; returned serverID = %s" % serverID)
+
+        if serverID == None:
+            raise "Could not find server '%s' on node '%s'" % (servername, nodename)
+        else:
+            serviceName = "HighPerformanceExtensibleLogging"
+
+            sop (m, "Calling AdminConfig.list with serviceName = %s and serverID = %s." % (serviceName, serverID))
+            HPELID = AdminConfig.list(serviceName, serverID)
+            sop (m, "Returned from AdminConfig.list; HPELID = %s" % HPELID)
+
+            sop (m, "Calling AdminConfig.list to get the config ID of the HPEL Text Log object.")
+            HPELTextLogID = AdminConfig.list("HPELTextLog", HPELID)
+            sop (m, "Returned from AdminConfig.list; HPELTextLogID = %s" % HPELTextLogID)
+
+            sop(m, "Calling AdminConfig.showAttribute to get the value of attribute = %s" % ( attributename ))
+            attributevalue = AdminConfig.showAttribute(HPELTextLogID, attributename)
+            sop (m, "Returned from AdminConfig.showAttribute; attributevalue = %s" % ( attributevalue ))
+
+            sop (m, "Exiting function...")
+            return attributevalue
+        #endif
+    #endif
+#endDef
 
 def configureHPELTrace (nodename, servername, additionalParmsList):
     """ This function configures HPEL Trace for the specified server.
@@ -10050,6 +10265,78 @@ def configureHPELTrace (nodename, servername, additionalParmsList):
     #endif
 #endDef
 
+def getHPELTraceLogAttribute(nodename, servername, attributename):
+    """ This function returns an attribute of the HPEL Trace Log for the specified server.
+
+        Function parameters:
+
+        nodename - the name of the node on which the server to be configured resides.
+        servername - the name of the server whose HPEL Trace is to be configured.
+        attributename - the following attribute names can be specified:
+                              - 'dataDirectory' - Specifies the name of the directory where the HPEL logs
+                                                  will be stored.
+                              - 'bufferingEnabled' - Specifies whether or not log record buffering should
+                                                     be enabled.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchEnabled' - Specifies whether or not a new log file should be
+                                                      started each day.  Valid values are 'true' and 'false'.
+                              - 'fileSwitchTime' - If 'fileSwitchEnabled' is set to 'true', this field
+                                                   specifies the time that new log file should be started.
+                                                   A value from 0 - 23 should be specified. A value of 0
+                                                   means 12 AM 1 means 1 AM, 2 means 2 AM, ..., 23 means
+                                                   11 PM.  If a value greater than 23 is entered, this
+                                                   field will be set to 0 (12 AM).
+                              - 'memoryBufferSize' - Specifies the size (in MB) of the memory trace buffer.
+                              - 'outOfSpaceAction' - Specifies which action to take if the hard disk runs
+                                                     out of space.  Valid values are 'StopLogging',
+                                                     'StopServer', and 'PurgeOld'.
+                              - 'purgeBySizeEnabled' - Specifies whether or not to purge the logs based
+                                                       on size.  Valid values are 'true' and 'false'.
+                              - 'purgeByTimeEnabled' - Specifies whether or not to purge the logs based
+                                                       on time.  Valid values are 'true' and 'false'.
+                              - 'purgeMaxSize' - Specifies the maximum total size of the logs (in MB).
+                              - 'purgeMinTime' - Specifies the minimum amount of time to keep the logs
+                                                 (in hours).
+                              - 'storageType' - Specifies whether the trace log should be written to a
+                                                directory or to memory.  Valid values are 'DIRECTORY'
+                                                and 'MEMORYBUFFER'.
+    """
+
+    m = "getHPELTraceLogAttribute:"
+    sop (m, "Entering function...")
+
+    sop (m, "Calling getNodeId() with nodename = %s." % (nodename))
+    nodeID = getNodeId(nodename)
+    sop (m, "Returned from getNodeID; returned nodeID = %s" % nodeID)
+
+    if nodeID == "":
+        raise "Could not find node name '%s'" % (nodename)
+    else:
+        sop (m, "Calling getServerId() with nodename = %s and servername = %s." % (nodename, servername))
+        serverID = getServerId(nodename, servername)
+        sop (m, "Returned from getServerID; returned serverID = %s" % serverID)
+
+        if serverID == None:
+            raise "Could not find server '%s' on node '%s'" % (servername, nodename)
+        else:
+            serviceName = "HighPerformanceExtensibleLogging"
+
+            sop (m, "Calling AdminConfig.list with serviceName = %s and serverID = %s." % (serviceName, serverID))
+            HPELID = AdminConfig.list(serviceName, serverID)
+            sop (m, "Returned from AdminConfig.list; HPELID = %s" % HPELID)
+
+            sop (m, "Calling AdminConfig.list to get the config ID of the HPEL Trace object.")
+            HPELTraceID = AdminConfig.list("HPELTrace", HPELID)
+            sop (m, "Returned from AdminConfig.list; HPELTraceID = %s" % HPELTraceID)
+
+            sop(m, "Calling AdminConfig.showAttribute to get the value of attribute = %s" % ( attributename ))
+            attributevalue = AdminConfig.showAttribute(HPELTraceID, attributename)
+            sop (m, "Returned from AdminConfig.showAttribute; attributevalue = %s" % ( attributevalue ))
+
+            sop (m, "Exiting function...")
+            return attributevalue
+        #endif
+    #endif
+#endDef
 
 def getServerNamedEndPoint(serverName, endPointName) :
     """
@@ -10102,10 +10389,25 @@ def getServerNamedEndPoint(serverName, endPointName) :
 # sets session manager cookie options, application scoped only at this time
 
 def setCookieConfig(scope, serverName, nodeName, appName, maximumAge, name, domain, path, secure, httpOnly) :
+
+    m = "setCookieConfig:"
+    if (scope == 'server'):
+        sop(m, "please use the modifyCookies() function instead of setCookieConfig, example: modifyCookies(nodeName,serverName,'true',maximumAge)");
+        # example: modifyCookies(nodeName,serverName,'true',maximumAge)
+        return 99
+    elif (scope == 'application'):
+        setCookieConfigApplication(appName, maximumAge, name, domain, path, secure, httpOnly)
+    else:
+        sop(m, "no scope set " + scope);
+        return 99
+
+#end_def
+
+def setCookieConfigApplication(appName, maximumAge, name, domain, path, secure, httpOnly) :
     """
     sets properties of cookie in a cookie and enables cookies in a session manager given an application name
-    """ 
-    m = "setCookieConfig:"
+    """
+    m = "setCookieConfigApplication:"
 
     tuningParmsDetailList = [['invalidationTimeout', 45]]
     tuningParamsList = ['tuningParams', tuningParmsDetailList]
@@ -10114,37 +10416,73 @@ def setCookieConfig(scope, serverName, nodeName, appName, maximumAge, name, doma
     sessionManagerDetailList = [['enable', 'true'], ['enableSecurityIntegration', 'true'], ['maxWaitTime', 30], ['sessionPersistenceMode', 'NONE'], ['enableCookies', 'true'], cookieSettings, tuningParamsList]
     sessionMgr = ['sessionManagement', sessionManagerDetailList]
 
-    # if scope is app...
-    if scope == "application":
-        sop (m, "Attempt to get value of application %s" %(appName))
+    sop (m, "Attempt to get value of application %s" %(appName))
 
-        deployments = AdminConfig.getid("/Deployment:"+appName+"/")
-        sop (m, deployments)
-        appDeploy = AdminConfig.showAttribute(deployments, 'deployedObject')
- 
-        app_id = AdminConfig.create('ApplicationConfig', appDeploy, [sessionMgr], 'configs')
-        sop (m, app_id)
+    deployments = AdminConfig.getid("/Deployment:"+appName+"/")
 
-        targetMappings = AdminConfig.showAttribute(appDeploy, 'targetMappings')
-        targetMappings = targetMappings[1:len(targetMappings)-1].split(" ")
-        sop (m, targetMappings)
+    if (deployments == ''):
+        sop (m, "could not find application "+appName)
+        return 99
 
-        for target in targetMappings:
-          if target.find('DeploymentTargetMapping') != -1:
-            attrs = ['config', app_id]
-            sop (m, "Modifying the application's cookie settings")
-            AdminConfig.modify(target,[attrs])
-          #endif
+    sop (m, deployments)
+    appDeploy = AdminConfig.showAttribute(deployments, 'deployedObject')
+
+    app_id = AdminConfig.create('ApplicationConfig', appDeploy, [sessionMgr], 'configs')
+    if (app_id == ''):
+        sop (m, "could not find application "+appName)
+        return 99
+    else:
+       sop (m, "found "+app_id)
+
+    targetMappings = AdminConfig.showAttribute(appDeploy, 'targetMappings')
+    targetMappings = targetMappings[1:len(targetMappings)-1].split(" ")
+    sop (m, targetMappings)
+
+    for target in targetMappings:
+      if target.find('DeploymentTargetMapping') != -1:
+        attrs = ['config', app_id]
+        sop (m, "Modifying the application's cookie settings")
+        AdminConfig.modify(target,[attrs])
+      #endif
+    #endfor
+
+#end_def
+
+
+def removeAllDisabledSessionCookies() :
+    """ new functionality in v8, there can be secure session cookies that will deny programmatical
+    session cookies in your application
+    Removes all of these session cookies, return list of disabled cookies, which should be empty at the end of this function
+    """
+    m = "removeAllDisabledSessionCookies:"
+
+    cellname = getCellName()
+
+    # this gets the list of secure session cookies
+    cell_id = AdminConfig.getid( '/Cell:%s/' % cellname )
+    sessionManager = AdminConfig.list('SecureSessionCookie', cell_id).split('\n')
+
+    if (sessionManager == ['']):
+        sop (m, "You have no secure session cookies for your cell "+cellname)
+        return AdminTask.listDisabledSessionCookie() # nothing to delete
+    else:
+
+        for sessionCookie in sessionManager:
+            size = len(sessionCookie)
+            sop (m, sessionCookie)
+
+            # a little parsing
+            if sessionCookie[size-1] == ')':
+                sessionCookie = sessionCookie[1:size-1]
+            else:
+                sessionCookie = sessionCookie[1:size-2]
+
+            attr = "-cookieId " + sessionCookie
+            AdminTask.removeDisabledSessionCookie(attr)
+
         #endfor
 
-    # if scope is server...
-    elif scope == "server":
-        sop (m, "Attempt to get value of server %s" %(serverName))
+    return AdminTask.listDisabledSessionCookie()
 
-        ######### NOT WORKING!
-        sop (m, "Sorry, you cannot set the server session cookies through this script at this time")
-    else:
-        sop (m, "Bad scope %s" %(scope))
-    
 #end_def
 

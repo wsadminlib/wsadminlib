@@ -1,0 +1,38 @@
+
+
+2012-1120-2200
+    Initial delivery; same version as published at IBM developerWorks.
+
+2012-1121-1445
+    createCluster()  added parm nodeScopedRouting
+    stopCluster()  added fix for unspecified clustername
+    stopAllBusinessProcessTemplatesForApplication()  fixed indentation
+    setNumAsyncTimerThreas()  new method
+    setUseAsyncRunnableWorkManager()  new method
+    isApplicationReady()  new method
+    compareIntLists()  major bug fix
+    getShortHostnameForProcess()  new method
+    getServerServantJvm()  new method
+    removeJvmProperty()  added OS390 support
+    createJvmProperty()  added OS390 support
+    getHostAliasID()  new method
+    deleteAndEnsureHostAlias()  new method
+    getSipContainerCustomProperty()  new method
+    setServerPMI()  added parm syncUpdate
+    configureWebContainerMBeanStopTransports()  fixed server name
+    configureWebContainerMBeanStartTransports()  fixed server name
+    getArgConfigfile()   deleted private method
+    addAppSrvCompUnit()  fixed quotes in arg
+    addClusterCompUnit()  fixed quotes in arg
+    _create()   fixed when using template
+    createMailProvider()  major rewrite
+    createMailSession()  major rewrite
+    createBridgeInterface()  added 'propertySet'
+    getHPELBinaryLogAttribute()  new method
+    getHPELTextLogAttribute()  new method
+    getHPELTraceLogAttribute()  new method
+    setCookieConfig()  split to support both server and application scope
+    setCookieConfigApplication()  new method for Application scope
+
+
+
