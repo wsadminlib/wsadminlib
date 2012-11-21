@@ -1,0 +1,76 @@
+ 
+OSS Contribution Guidelines for wsadminlib
+------------------------------------------
+1. Definitions
+2. License
+3. Coding standards
+4. Testing
+5. Submission process
+
+ 
+ 
+1. Definitions
+----------------
+- "Patches" are small fixes to existing methods in wsadminlib
+- "New methods" are newly-written subroutines added to wsadminlib.
+- "Contributions" includes both patches and new methods.
+ 
+
+ 
+2. License
+---------------
+Consumer License:
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Contributor License Agreement:
+    http://www.apache.org/licenses/icla.txt
+ 
+ 
+ 
+3. Coding Standards
+----------------------
+All contributions must meet the following coding standards.
+ 
+a. Do not change existing method signatures.
+Why? Other consumers are using these methods in production.
+ 
+b. Use spaces. No tabs.
+Why? Consistent indentation across different editors.
+ 
+c. All methods return a return code or raise an exception on failure.
+Methods never fail silently or with warning message only.
+Why? Speed debug by identifying the failure as soon as possible.
+ 
+d. Every method includes pydoc.
+Why? Explain your intention for parameters and return codes.
+ 
+e. All code in wsadminlib looks like the rest of wsadminlib.
+Why? Varying styles is distracting. Assist future programmers.
+ 
+f. All methods in wsadminlib use method sop() for logging.
+Why? Consistent to enable/disable, generic timestamp.
+ 
+
+ 
+4. Testing
+-----------------
+a. All contributions must be submitted with evidence of successful execution,
+such as screenshots, sop() logs, etc.
+ 
+b. Pydoc in new methods lists version(s) of WebSphere Application Server tested.
+
+ 
+ 
+5. Submission Process
+----------------------------
+a. Contributors send a copy of their Contributor License Agreement to
+the wsadminlib community leader.
+
+b. Initially, all contributions are emailed to the community leader
+for evaluation, socialization, and acceptance.
+ 
+c. As the number of trusted committers grows, contributions will be posted to
+the community for evaluation and acceptance by other committers.
+ 
+
+
