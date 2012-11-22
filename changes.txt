@@ -34,5 +34,10 @@
     setCookieConfig()  split to support both server and application scope
     setCookieConfigApplication()  new method for Application scope
 
+2012-1121-2107
+    getOrbId()  new method
+    getOrbCustomProperty()  new method
+    setOrbCustomProperty()  new method
+    deleteOrbCustomProperty()  new method
 
 

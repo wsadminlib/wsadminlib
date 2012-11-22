@@ -169,8 +169,8 @@ def testSIPCustomProps(cfg):
     m = "testSIPCustomProps:"
     sop(m,"Entry.")
 
-    propName = "proptestname"
-    propValue = "proptestvalue" + getSopTimestamp()
+    propName = "sipproptestname"
+    propValue = "sipproptestvalue" + getSopTimestamp()
     nodeName = cfg["nodeName"]
     serverName = cfg["serverName"]
 
@@ -189,6 +189,48 @@ def testSIPCustomProps(cfg):
         errbrk(m,"Prop values are not the same. propValue=" + propValue + " newPropValue=" + newPropValue)
 
 #-----------------------------------------------------------------------
+# ORB
+#-----------------------------------------------------------------------
+def testORBProps(cfg):
+    """Sets and gets props in the ORB."""
+    m = "testORBProps:"
+    sop(m,"Entry.")
+
+    propName = "orbproptestname"
+    propValue = "orbproptestvalue" + getSopTimestamp()
+    nodeName = cfg["nodeName"]
+    serverName = cfg["serverName"]
+
+    # Query ID
+    orbID = getOrbId( nodeName, serverName )
+    sop(m,"orbID=" + orbID)
+
+    # Write    
+    setOrbCustomProperty(nodeName, serverName, propName, propValue)
+    sop(m,"Set prop. nodeName=" + nodeName + " serverName=" + serverName + " propName=" + propName + " propValue=" + propValue)
+
+    # Read
+    newPropValue = getOrbCustomProperty(nodeName, serverName, propName)
+    sop(m,"Read prop. newPropValue=%s" % ( repr(newPropValue) ))
+
+    # Compare
+    if not propValue == newPropValue:
+        errbrk(m,"Prop values are not the same. propValue=" + propValue + " newPropValue=%s" % ( repr(newPropValue) ))
+
+    # Delete
+    deleteOrbCustomProperty(nodeName, serverName, propName)
+
+    # Read again
+    newPropValue = getOrbCustomProperty(nodeName, serverName, propName)
+    sop(m,"Read prop again. newPropValue=%s" % ( repr(newPropValue) ))
+
+    # Verify
+    if not None == newPropValue:
+        errbrk(m,"Deleted prop value is not None. newPropValue=%s" % ( repr(newPropValue) ))
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
 def testBase():
@@ -203,6 +245,7 @@ def testBase():
     testSave(cfg)
     testApps(cfg)
     testSIPCustomProps(cfg)
+    testORBProps(cfg)
     sop(m,"Exit success. gfg=" + repr(cfg))
 
 def testND():

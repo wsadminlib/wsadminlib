@@ -6258,6 +6258,79 @@ def configureJPAService (nodename, servername, persistenceProvider, JTADSJndiNam
 #endDef
 
 ############################################################
+# Orb specific utilities
+
+def getOrbId( nodename, servername ):
+    """Returns the ID string for the ORB of the specified server or proxy."""
+    m = "getOrbId:"
+    sop(m,"Entry. nodename=%s servername=%s" % ( nodename, servername ))
+
+    # Get the ID string for the specified server or proxy.
+    server_id = getServerId(nodename, servername)
+    sop(m,"server_id=%s" % ( server_id ))
+
+    # Get the ID string for the ORB.
+    orb_id = AdminConfig.list( "ObjectRequestBroker", server_id )
+
+    sop (m, "Exit. Returning orb_id=%s" % ( orb_id ))
+    return orb_id
+
+def getOrbCustomProperty( nodename, servername, propname ):
+    """Returns the current value of the specified property
+    in the orb of the specified server or proxy."""
+    m = "getOrbCustomProperty:"
+    sop(m,"Entry. nodename=%s servername=%s propname=%s" % ( nodename, servername, propname ))
+
+    # Get the ID string for the specified server or proxy.
+    orb_id = getOrbId( nodename, servername )
+    sop(m,"orb_id=%s" % ( orb_id ))
+
+    # Get the custom property.
+    propvalue = getObjectCustomProperty(orb_id, propname)
+
+    sop(m,"Exit. Returning propvalue=%s" % ( propvalue ))
+    return propvalue
+
+def setOrbCustomProperty( nodename, servername, propname, propvalue ):
+    """Sets the specified custom property 
+    in the orb of the specified server or proxy."""
+    m = "setOrbCustomProperty:"
+    sop(m,"Entry. nodename=%s servername=%s propname=%s propvalue=%s" % ( nodename, servername, propname, propvalue ))
+
+    # Get the ID string for the specified server or proxy.
+    orb_id = getOrbId( nodename, servername )
+    sop(m,"orb_id=%s" % ( orb_id ))
+
+    # Set the property.
+    setCustomPropertyOnObject(orb_id, propname, propvalue)
+    sop(m,"Exit. Successfully set %s=%s" % ( propname, propvalue ))
+
+def deleteOrbCustomProperty( nodename, servername, propname ):
+    """Deletes the specified custom property from 
+    the orb of the specified server or proxy."""
+    m = "deleteOrbCustomProperty:"
+    sop(m,"Entry. nodename=%s servername=%s propname=%s" % ( nodename, servername, propname ))
+
+    # Get the ID string for the specified server or proxy.
+    orb_id = getOrbId( nodename, servername )
+    sop(m,"orb_id=%s" % ( orb_id ))
+
+    # Does it exist?
+    propvalue = getObjectCustomProperty(orb_id, propname)
+    if propvalue != None:
+        # Exists
+        # sop(m,"Exists.")
+        propsidlist = AdminConfig.showAttribute(orb_id,'properties')[1:-1].split(' ')
+        for id in propsidlist:
+            name = AdminConfig.showAttribute(id, 'name')
+            # sop(m,"id=%s name=%s" % ( id, name ))
+            if name == propname:
+                AdminConfig.remove(id)
+                sop(m,"Exit. Successfully removed propname=%s" % ( propname ))
+                return
+    sop(m,"Exit. Property propname=%s does not exist." % ( propname ))
+
+############################################################
 # Shared Library and Class Loader methods
 
 def createSharedLibrary(libname, jarfile):
