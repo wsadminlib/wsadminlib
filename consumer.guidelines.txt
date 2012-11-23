@@ -1,0 +1,72 @@
+ 
+Consumer Guidelines for wsadminlib
+----------------------------------
+
+Introduction
+------------
+
+wsadminlib is a library to simplify configuring WebSphere.
+It intends to hide the complexities of the wsadmin scripting
+interface behind task-oriented methods.
+
+These methods are invoked when connected to one dmgr or standalone server.
+If you need multiple cells, you must configure them one at a time.
+
+Typical wsadminlib usage would be to write a python script that uses these
+methods, then invoke the script with 'wsadmin -lang jython -f yourscript'.
+
+Download
+--------
+
+To fetch the current copy of wsadminlib.py:
+    Browse here:  https://github.com/wsadminlib/wsadminlib/downloads
+    Click 'download as zip' -> save file wsadminlib-master.zip
+    Unzip in a tmp directory and find file bin/wsadminlib.py
+
+Try it
+------
+
+You can try wsadminlib.py immediately if you have a WAS standalone server 
+or deployment manager running.
+
+Create a sample script file named mysample.py.  Place it in the same
+directory as wsadminlib.py:
+
+    """This sample script uses wsadminlib.py to display the WAS cell name."""
+    execfile('wsadminlib.py')
+    cellName = getCellName()
+    print "cellName=" + cellName
+
+Then invoke the sample:
+
+    wsadmin.sh -lang jython -f mydir/mysample.py 
+    WASX7209I: Connected to process "dmgr" on node node01 using SOAP connector;  
+    The type of process is: DeploymentManager
+    cellName=dbc1Cell01
+
+Explore
+-------
+
+Wsadminlib.py has many hundreds of methods.  Most are well-documented in the
+header of each method.  Feel free to search for objects you'd like to configure,
+and then experiment using wsadminlib to configure them.
+
+A small unit-test file is included in the wsadminlib zip: tests/wsadminlib.test.py
+You are welcome to search it for sample usage.  You may also try running the tests,
+but beware the tests will change the configuration of your WAS server.
+
+Consume
+-------
+
+When you find something you like in wsadminlib.py, you are welcome to
+use it in either of these ways:
+- Copy wsadminlib.py to your directory of wsadmin library files, and 
+    call its methods from your own scripts.
+- Copy/paste from wsadminlib.py directly to your own scripts.
+
+Enjoy
+-----
+
+We hope wsadminlib.py is helpful to you.
+
+
