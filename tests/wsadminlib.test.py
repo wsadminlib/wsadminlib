@@ -231,6 +231,27 @@ def testORBProps(cfg):
     sop(m,"Exit. Success.")
 
 #-----------------------------------------------------------------------
+# WebSphere Variables
+#-----------------------------------------------------------------------
+def testWebSphereVariables(cfg):
+    """Sets and gets WebSphere Variables."""
+    m = "testWebSphereVariables:"
+    sop(m,"Entry.")
+
+    setWebSphereVariable("WSADMINLIB_TEST_VARIABLE", "myTestContent", cfg["nodeName"])
+
+    testString = "Test[${WSADMINLIB_TEST_VARIABLE}]String"
+    targetString = "Test[myTestContent]String"
+    replacedString = expandWebSphereVariables(testString, cfg["nodeName"])
+
+    if targetString != replacedString:
+        errbrk(m,"String was not replaced as expected. replacedString=%s" % ( repr(replacedString) ))
+
+    removeWebSphereVariable("WSADMINLIB_TEST_VARIABLE", cfg["nodeName"])
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
 def testBase():
@@ -246,7 +267,8 @@ def testBase():
     testApps(cfg)
     testSIPCustomProps(cfg)
     testORBProps(cfg)
-    sop(m,"Exit success. gfg=" + repr(cfg))
+    testWebSphereVariables(cfg)
+    sop(m,"Exit success. cfg=" + repr(cfg))
 
 def testND():
     """Runs all testcases for a clustered environment."""
@@ -257,6 +279,6 @@ def testND():
     cfg = {}
     # TBD
 
-    sop(m,"Exit success. gfg=" + repr(cfg))
+    sop(m,"Exit success. cfg=" + repr(cfg))
 
 
