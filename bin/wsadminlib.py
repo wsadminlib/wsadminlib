@@ -4300,26 +4300,15 @@ def getNodeIdWithCellId ( cellname, nodename ):
 
 def getNodeVariable(nodename, varname):
     """Return the value of a variable for the node -- or None if no such variable or not set"""
-    vmaps = _splitlines(AdminConfig.list('VariableMap', getNodeId(nodename)))
-    if 0 < len(vmaps):  # Tolerate nodes with no such maps, for example, IHS nodes.
-        map_id = vmaps[-1] # get last one
-        entries = AdminConfig.showAttribute(map_id, 'entries')
-        # this is a string '[(entry) (entry)]'
-        entries = entries[1:-1].split(' ')
-        for e in entries:
-            name = AdminConfig.showAttribute(e,'symbolicName')
-            value = AdminConfig.showAttribute(e,'value')
-            if name == varname:
-                return value
-    return None
+    return getWebSphereVariable(varname, nodename)
 
 def getWasInstallRoot(nodename):
     """Return the absolute path of the given node's WebSphere installation"""
-    return getNodeVariable(nodename, "WAS_INSTALL_ROOT")
+    return getWebSphereVariable("WAS_INSTALL_ROOT", nodename)
 
 def getWasProfileRoot(nodename):
     """Return the absolute path of the given node's profile directory"""
-    return getNodeVariable(nodename, "USER_INSTALL_ROOT")
+    return getWebSphereVariable("USER_INSTALL_ROOT", nodename)
 
 def getServerId(nodename,servername):
     """Return the config id for a server or proxy.  Could be an app server or proxy server, etc"""
@@ -9381,6 +9370,20 @@ def getVariableMap ( nodeName=None, serverName=None, clusterName=None ):
             return map
     return None
 
+def getWebSphereVariable ( name, nodeName=None, serverName=None, clusterName=None ):
+    """Return the value of a variable for the specified scope -- or None if no such variable or not set"""
+    map = getVariableMap(nodeName, serverName, clusterName)
+    if map != None:  # Tolerate nodes with no such maps, for example, IHS nodes.
+        entries = AdminConfig.showAttribute(map, 'entries')
+        # this is a string '[(entry) (entry)]'
+        entries = entries[1:-1].split(' ')
+        for e in entries:
+            symbolicName = AdminConfig.showAttribute(e,'symbolicName')
+            value = AdminConfig.showAttribute(e,'value')
+            if name == symbolicName:
+                return value
+    return None
+
 def setWebSphereVariable ( name, value, nodeName=None, serverName=None, clusterName=None ):
     """Creates a VariableSubstitutionEntry at the specified scope, removing any previously existing entry in the process"""
     map = getVariableMap(nodeName, serverName, clusterName)
@@ -9393,6 +9396,31 @@ def removeWebSphereVariable ( name, nodeName=None, serverName=None, clusterName=
     """Removes a VariableSubstitutionEntry at the specified scope"""
     map = getVariableMap(nodeName, serverName, clusterName)
     findAndRemove('VariableSubstitutionEntry', [['symbolicName', name]], map)
+
+def expandWebSphereVariables ( variableString, nodeName=None, serverName=None, clusterName=None ):
+    """ This function expands all WAS variable references 
+        such as ${WAS_INSTALL_ROOT} in variableString with their
+        values at the specified scope."""
+    while variableString.find("${") != -1:
+        startIndex = variableString.find("${")
+        endIndex = variableString.find("}", startIndex)
+
+        if endIndex == -1:
+            raise 'end of variable not found'
+
+        variableName = variableString[startIndex+2:endIndex]
+
+        if variableName == '':
+            raise 'variable name is empty'
+
+        variableValue = getWebSphereVariable(variableName, nodeName, serverName, clusterName)
+
+        if variableValue == None:
+            raise 'variable ' + variableName + ' is not defined at the specified scope.'
+
+        variableString = variableString.replace("${" + variableName + "}", variableValue)
+
+    return variableString
 
 ###############################################################################
 # Core Group Management (changes introduced by CGB FAT - to be added to wsadminlib.py/wsat project)
