@@ -252,6 +252,43 @@ def testWebSphereVariables(cfg):
     sop(m,"Exit. Success.")
 
 #-----------------------------------------------------------------------
+# Virtual Host
+#-----------------------------------------------------------------------
+def testVirtualHost(cfg):
+    """Creates Virtual Host and tests various functions."""
+    m = "testVirtualHost:"
+    sop(m,"Entry.")
+
+    testVirtualHost = 'wsadminlibtest_host'
+
+    createVirtualHost(testVirtualHost)
+
+    vh = getVirtualHostByName(testVirtualHost)
+    if vh == None:
+        errbrk(m,"Created virtual host could not be retrieved.")
+
+    # Load Microsoft MIME Types not included with WAS V6.0 by default
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'docm', 'application/vnd.ms-word.document.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'dotm', 'application/vnd.ms-word.template.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'dotx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.template')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'ppam', 'application/vnd.ms-powerpoint.addin.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'ppsm', 'application/vnd.ms-powerpoint.slideshow.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'ppsx', 'application/vnd.openxmlformats-officedocument.presentationml.slideshow')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'pptm', 'application/vnd.ms-powerpoint.presentation.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'sldx', 'application/vnd.openxmlformats-officedocument.presentationml.slide')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'xlsb', 'application/vnd.ms-excel.sheet.binary.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'xlsm', 'application/vnd.ms-excel.sheet.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'xltm', 'application/vnd.ms-excel.template.macroEnabled.12')
+    setVirtualHostMimeTypeForExtension(testVirtualHost, 'xps', 'application/vnd.ms-xpsdocument')
+
+    deleteVirtualHost(testVirtualHost)
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
 def testBase():
@@ -268,6 +305,7 @@ def testBase():
     testSIPCustomProps(cfg)
     testORBProps(cfg)
     testWebSphereVariables(cfg)
+    testVirtualHost(cfg)
     sop(m,"Exit success. cfg=" + repr(cfg))
 
 def testND():
