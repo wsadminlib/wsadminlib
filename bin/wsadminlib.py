@@ -4843,6 +4843,23 @@ def deleteVirtualHost( virtualhostname ):
     AdminConfig.remove( host_id )
     return 1
 
+def setVirtualHostMimeTypeForExtension(virtualhostname, newExtension, newMimeType):
+    """Set MIME-Type for a specified file extension on a specified virtual host"""
+    m = "setVirtualHostMimeTypeForExtension:"
+    vh = getVirtualHostByName(virtualhostname)
+    mimeTypes = AdminConfig.showAttribute(vh, 'mimeTypes')
+    mimeTypeArray = mimeTypes[1:-1].split(" ")
+    changeCount = 0
+    for mimeType in mimeTypeArray:
+        ext = AdminConfig.showAttribute(mimeType, 'extensions')
+        if ext.find(newExtension) != -1:
+            sop(m, "Modifying extensions=%s type=%s" % (newExtension, newMimeType))
+            changeCount += 1
+            return AdminConfig.modify(mimeType, [['type', newMimeType]])
+    if changeCount == 0:
+        sop(m, "Creating extensions=%s type=%s" % (newExtension, newMimeType))
+        return AdminConfig.create('MimeEntry', vh, [['extensions', newExtension], ['type', newMimeType]])
+
 def hostAliasExists( virtualhostname, aliashostname, port ):
     """Return true if the specified host alias already exists"""
     host_id = getVirtualHostByName( virtualhostname )
