@@ -3925,10 +3925,13 @@ def _whatEnv():
 
 def getCellName():
     """Return the name of the cell we're connected to"""
+    m = "getCellName:"
     # AdminControl.getCell() is simpler, but only
     # available if we're connected to a running server.
     cellObjects = getObjectsOfType('Cell')  # should only be one
+    sop(m, "Got Cell objects %s" % (cellObjects))
     cellname = getObjectAttribute(cellObjects[0], 'name')
+    sop(m, "Got cell name %s" % (cellname))
     return cellname
 
 def getCellId(cellname = None):
@@ -4292,6 +4295,10 @@ def getNodeNameList(platform=None,servertype=None):
 
 def getNodeId( nodename ):
     """Given a node name, get its config ID"""
+    m = "getNodeId:"
+    sop(m, "About to get node %s" % (nodename))
+    config_string =  '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) 
+    sop(m, "Trying to get ID with the following string: %s" % (config_string))
     return AdminConfig.getid( '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) )
 
 def getNodeIdWithCellId ( cellname, nodename ):
@@ -4312,6 +4319,7 @@ def getWasProfileRoot(nodename):
 
 def getServerId(nodename,servername):
     """Return the config id for a server or proxy.  Could be an app server or proxy server, etc"""
+    sop('getServerId', "About to get object for node %s and server %s" % (nodename, servername))
     id = getObjectByNodeAndName(nodename, "Server", servername) # app server
     if id == None:
         id = getObjectByNodeAndName(nodename, "ProxyServer", servername)
@@ -4342,7 +4350,10 @@ def getObjectByNodeAndName( nodename, typename, objectname ):
     """Get the config object ID of an object based on its node, type, and name"""
     # This version of getObjectByName distinguishes by node,
     # which should disambiguate some things...
+    m = "getObjectByNodeAndName:"
+    sop(m, "About to get object for node %s and object %s, of type %s" % (nodename, objectname, typename))
     node_id = getNodeId(nodename)
+    sop(m, "Got node ID %s" % (node_id))
     all = _splitlines(AdminConfig.list( typename, node_id ))
     result = None
     for obj in all:
@@ -10603,4 +10614,27 @@ def removeAllDisabledSessionCookies() :
     return AdminTask.listDisabledSessionCookie()
 
 #end_def
+
+def getQueueConnectionFactoryNames():
+    """ A convenient way to get a list of the names of the configured queue connection factories, without the client 
+        having to know the particular type name to pass.
+    """
+    qcf_names = []
+    for qcf in getObjectsOfType('ConnectionFactory'):
+        qcf_names.append(getObjectAttribute(qcf, 'name'))
+    #endfor
+    
+    return qcf_names
+#end_def
+
+def getMQQueues():
+    """ A convenient way to get a list of the names of the configured WebSphere MQ queues, without the client
+        having to know the particular type name to pass.
+    """
+    queue_names = []
+    for queue in getObjectsOfType('MQQueue'):
+        queue_names.append(getObjectAttribute(queue, 'name'))
+    #endfor
+    
+    return queue_names
 
