@@ -10638,3 +10638,40 @@ def getMQQueues():
     
     return queue_names
 
+def getAppNameFromZip(filename):
+    """Get the  application name - it's in an xml file in the ear."""
+    import zipfile
+    zf = zipfile.ZipFile(filename, "r")
+    appxml = zf.read("META-INF/application.xml")
+    zf.close()
+
+    # parse the xml file
+    # (cheat - it's simple)
+    start_string = "<display-name>"
+    end_string = "</display-name>"
+    start_index = appxml.find(start_string) + len(start_string)
+    end_index = appxml.find(end_string)
+
+    appname = appxml[start_index:end_index].strip()
+    return appname
+
+def stopApplication(appname):
+    """Stop the named application on all its servers.
+       Copied from startApplication()
+    """
+    m = "stopApplication:"
+    sop(m,"Entry. appname=%s" % ( appname ))
+    cellname = getCellName()
+    servers = listServersOfType('APPLICATION_SERVER')
+    for (nodename,servername) in servers:
+        sop(m,"Handling cellname=%s nodename=%s servername=%s" % 
+            ( cellname, nodename, servername ))
+        # Get the application manager MBean
+        appManager = AdminControl.queryNames(
+            'cell=%s,node=%s,type=ApplicationManager,process=%s,*' % 
+            (cellname,nodename,servername))
+        # start it
+        sop(m,"Stopping appname=%s" % ( appname ))
+        AdminControl.invoke(appManager, 'stopApplication', appname)
+    sop(m,"Exit.")
+
