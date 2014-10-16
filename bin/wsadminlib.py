@@ -3674,19 +3674,7 @@ def updateApplication(filename):
     """Update an application with a new ear file"""
     # We need to know the application name - it's in an xml file
     # in the ear
-    import zipfile
-    zf = zipfile.ZipFile(filename, "r")
-    appxml = zf.read("META-INF/application.xml")
-    zf.close()
-
-    # parse the xml file
-    # (cheat - it's simple)
-    start_string = "<display-name>"
-    end_string = "</display-name>"
-    start_index = appxml.find(start_string) + len(start_string)
-    end_index = appxml.find(end_string)
-
-    appname = appxml[start_index:end_index].strip()
+    appname = getAppNameFromZip(filename)
 
     AdminApp.update(appname,            # name of application
                     'app',              # type of update to do
