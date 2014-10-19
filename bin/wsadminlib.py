@@ -4287,7 +4287,7 @@ def getNodeId( nodename ):
     sop(m, "About to get node %s" % (nodename))
     config_string =  '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) 
     sop(m, "Trying to get ID with the following string: %s" % (config_string))
-    return AdminConfig.getid( '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) )
+    return AdminConfig.getid(config_string)
 
 def getNodeIdWithCellId ( cellname, nodename ):
      """Given a cell name and node name, get its config ID"""
@@ -10644,8 +10644,12 @@ def getAppNameFromZip(filename):
     return appname
 
 def stopApplication(appname):
-    """Stop the named application on all its servers.
-       Copied from startApplication()
+    """ Stop the named application on all its servers.
+        Copied from startApplication()
+
+        Note: This method assumes the application is installed on all servers.
+        To start an application on an individual server, use stopApplicationOnServer()
+        To start an application on all members of a cluster, use stopApplicationOnCluster()
     """
     m = "stopApplication:"
     sop(m,"Entry. appname=%s" % ( appname ))
