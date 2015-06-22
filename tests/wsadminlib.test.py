@@ -231,6 +231,34 @@ def testORBProps(cfg):
     sop(m,"Exit. Success.")
 
 #-----------------------------------------------------------------------
+# Web Container
+#-----------------------------------------------------------------------
+def testWebContainerProps(cfg):
+    """Tests the setting of Web Container Properties."""
+    m = "testWebContainerProps:"
+    sop(m,"Entry.")
+
+    propName1 = "wsadminlib.test.foo"
+    propName2 = "wsadminlib.test.bar"
+    nodeName = cfg["nodeName"]
+    serverName = cfg["serverName"]
+
+    wc = getWebcontainer(nodeName, serverName)
+    beforeLen = len(_splitlist(AdminConfig.showAttribute(wc, 'properties')))
+
+    setWebContainerCustomProperty(nodeName, serverName, propName1, "abc123")
+    setWebContainerCustomProperty(nodeName, serverName, propName2, "abc456")
+    setWebContainerCustomProperty(nodeName, serverName, propName1, "abc123")
+    setWebContainerCustomProperty(nodeName, serverName, propName2, "abc456")
+
+    afterLen = len(_splitlist(AdminConfig.showAttribute(wc, 'properties')))
+
+    if afterLen > beforeLen + 2:
+        errbrk(m,"Web container prop name not replaced correctly. beforeLen=%s afterLen=%s" % ( repr(beforeLen), repr(afterLen) ))
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # WebSphere Variables
 #-----------------------------------------------------------------------
 def testWebSphereVariables(cfg):
@@ -304,6 +332,7 @@ def testBase():
     testApps(cfg)
     testSIPCustomProps(cfg)
     testORBProps(cfg)
+    testWebContainerProps(cfg)
     testWebSphereVariables(cfg)
     testVirtualHost(cfg)
     sop(m,"Exit success. cfg=" + repr(cfg))
