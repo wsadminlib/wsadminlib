@@ -5422,8 +5422,8 @@ def getObjectCustomProperty(object_id, propname):
     Write wrappers to be called externally.
     """
 
-    x = AdminConfig.showAttribute(object_id,'properties')[1:-1]
-    if len(x) == 0:
+    x = AdminConfig.showAttribute(object_id,'properties')
+    if len(x[1:-1]) == 0:
         return None  # no properties set yet
     #print "value of properties attribute=%s" % x
     # This can be of the format "[foo(value) bar(baz)]" where the values are "foo(value)",
