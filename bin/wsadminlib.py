@@ -5847,7 +5847,6 @@ def stringListListToDict(stringListList):
     # sop(m,"Exit. dict=%s" % ( repr(dict) ))
     return dict
 
-
 def listOfStringsToJaclString(listOfStrings):
     """Nuisance method works around yet-another behavior in wsadmin/jython.
 
