@@ -1115,8 +1115,7 @@ def restartServer( nodename, servername, maxwaitseconds, ):
 def extractConfigProperties( nodename, servername, propsfilename, ):
     """Converts the server configuration from xml files to a flat properties file"""
     m = "extractConfigProperties:"
-    # TODO: Figure out how to specify the node name...
-    arglist = ['-propertiesFileName',propsfilename,'-configData','Server=%s' % ( servername )]
+    arglist = ['-propertiesFileName',propsfilename,'-configData','Node=%s:Server=%s' % ( nodename, servername )]
     sop(m,"Calling AdminTask.extractConfigProperties() with arglist=%s" % ( arglist ))
     return AdminTask.extractConfigProperties( arglist )
 
