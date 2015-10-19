@@ -5806,9 +5806,9 @@ def stringListListToDict(stringListList):
 
     # Dummy check.
     if not (stringListList.startswith( '[' ) and stringListList.endswith( ']' )):
-        raise m + " ERROR: stringListList does not start and end with square brackets. stringListList=%s" % ( m, stringListList, )
+        raise "%s ERROR: stringListList does not start and end with square brackets. stringListList=%s" % ( m, stringListList )
 
-    # Strip off the leading and trailing square brackets.
+    # Strip off the leading and trailing square brackets. And strip off whitespace
     stringListList = stringListList[1:(len(stringListList) - 1)].strip()
     # sop(m,"stringListList=%s" % ( stringListList ))
 
@@ -5823,14 +5823,14 @@ def stringListListToDict(stringListList):
 
         # Check first list.
         if not (firstListString.startswith( '[' ) and firstListString.endswith( ']' )):
-            raise m + " ERROR: firstListString does not start and end with square brackets. firstListString=%s" % ( m, firstListString, )
-        # Strip off the leading and trailing square brackets.
-        firstListString = firstListString[1:(len(firstListString) - 1)].strip()
+            raise "%s ERROR: firstListString does not start and end with square brackets. firstListString=%s" % ( m, firstListString )
+        # Strip off the leading and trailing square brackets. Do not strip off whitespace; otherwise, a possible null value is lost. e.g. [serverId ]
+        firstListString = firstListString[1:(len(firstListString) - 1)]
         # sop(m,"firstListString=>>>%s<<< " % ( firstListString ))
         # Get the key and value.
         splitList = firstListString.split(' ',1)
         if 2 != len(splitList):
-            raise m + " ERROR: unexpected contents in first list. Must be of form key space value. firstListString=%s" % ( m, firstListString, )
+            raise "%s ERROR: unexpected contents in first list. Must be of form key space value. firstListString=%s" % ( m, firstListString )
         key = splitList[0].strip()
         value = splitList[1].strip()
         # sop(m,"key=%s value=%s" % ( key, value ))
