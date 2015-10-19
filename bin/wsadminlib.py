@@ -109,7 +109,13 @@ def _splitlist(s):
     """
     if s[0] != '[' or s[-1] != ']':
         raise "Invalid string: %s" % s
-    return s[1:-1].split(' ')
+    # Remove outer brackets and strip whitespace
+    itemstr = s[1:-1].strip()
+    if itemstr == '':
+        itemarray = []
+    else:
+        itemarray = itemstr.split(' ')
+    return itemarray
 
 def _splitlines(s):
   rv = [s]
@@ -6456,10 +6462,9 @@ def deleteAllClassloaders(nodename, servername):
     #sop(m,"server_id=%s " % ( repr(server_id), ))
     appserver = AdminConfig.list('ApplicationServer', server_id)
     #sop(m,"appserver=%s " % ( repr(appserver), ))
-    classloaders = AdminConfig.showAttribute(appserver, 'classloaders')[1:-1].split(' ')
+    classloaders = _splitlist(AdminConfig.showAttribute(appserver, 'classloaders'))
     #sop(m,"classloaders=%s " % ( repr(classloaders), ))
-    # TODO: this seems like a hack, figure out how to get this to work without it.
-    if classloaders[0] != '':
+    if len(classloaders) > 0:
         for classloader in classloaders:
             AdminConfig.remove(classloader)
     #sop(m,"Exit. ")

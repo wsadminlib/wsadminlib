@@ -317,6 +317,18 @@ def testVirtualHost(cfg):
     sop(m,"Exit. Success.")
 
 #-----------------------------------------------------------------------
+# Classloaders
+#-----------------------------------------------------------------------
+def testClassloaders(cfg):
+    """Test classloader functions."""
+    m = "testClassloaders:"
+    sop(m,"Entry.")
+
+    deleteAllClassloaders(cfg["nodeName"], cfg["serverName"])
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
 def testBase():
@@ -335,6 +347,7 @@ def testBase():
     testWebContainerProps(cfg)
     testWebSphereVariables(cfg)
     testVirtualHost(cfg)
+    testClassloaders(cfg)
     sop(m,"Exit success. cfg=" + repr(cfg))
 
 def testND():
