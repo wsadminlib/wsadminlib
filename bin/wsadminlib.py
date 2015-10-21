@@ -5433,11 +5433,10 @@ def getObjectCustomProperty(object_id, propname):
     #print "value of properties attribute=%s" % x
     # This can be of the format "[foo(value) bar(baz)]" where the values are "foo(value)",
     # "bar(baz)".  It also seems to be able to be just "foo(value)"
-    # FIXME: should we use _splitlist here?  If so, we need to change it to work when no [] are given
     if x.startswith("["):
-        propsidlist = x[1:-1].split(' ')
+        propsidlist = _splitlist(x)
     else:
-        propsidlist = [x]
+        propsidlist = _splitlist('[' + x + ']')
     #print "List of properties = %s" % repr(propsidlist)
     for id in propsidlist:
         #print "id=%s" % id
