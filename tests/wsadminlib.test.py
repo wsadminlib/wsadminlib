@@ -329,6 +329,27 @@ def testClassloaders(cfg):
     sop(m,"Exit. Success.")
 
 #-----------------------------------------------------------------------
+# Clusters
+#-----------------------------------------------------------------------
+def testClusters(cfg):
+    """Test cluster functions."""
+    m = "testClusters:"
+    sop(m,"Entry.")
+
+    exceptionMessage = ""
+
+    try:
+        retval = getServerIDsForClusters('NonExistantClusterName')
+    except:
+        ( exceptionMessage, parms, tback ) = sys.exc_info()
+
+    if exceptionMessage != "getServerIDsForClusters only accepts a list as input":
+        sop(m,"getServerIDsForClusters returned %s" % ( repr( retval ) ))
+        errbrk(m,"getServerIDsForClusters did not raise expected exception message")
+
+    sop(m,"Exit. Success.")
+
+#-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
 def testBase():
@@ -348,6 +369,7 @@ def testBase():
     testWebSphereVariables(cfg)
     testVirtualHost(cfg)
     testClassloaders(cfg)
+    testClusters(cfg)
     sop(m,"Exit success. cfg=" + repr(cfg))
 
 def testND():
