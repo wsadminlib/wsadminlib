@@ -607,6 +607,11 @@ def getServerIDsForClusters (clusterList):
 
     serverIDList = []
 
+    # Verify that clusterList is indeed a list
+    if type(clusterList) != type([]):
+        sop(m, 'clusterList is not a list; raising exception')
+        raise 'getServerIDsForClusters only accepts a list as input'
+
     sop(m, 'Calling AdminConfig.list to get the list of clusters')
     clusters = _splitlines(AdminConfig.list ('ServerCluster'))
     sop(m, 'Got list of clusters')
