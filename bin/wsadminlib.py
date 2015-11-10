@@ -5711,7 +5711,7 @@ def propsToLists(propString):
 
     # Check for leading and trailing square brackets.
     if not (propString.startswith( '[ [' ) and propString.endswith( '] ]' )):
-        raise "ERROR: propString does not start and end with two square brackets. propString=%s" % ( m, propString, )
+        raise "%s ERROR: propString does not start and end with two square brackets. propString=%s" % ( m, propString, )
 
     # Strip off the leading and trailing square brackets.
     propString = propString[3:(len(propString) - 3)]
