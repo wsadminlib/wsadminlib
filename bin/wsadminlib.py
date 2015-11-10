@@ -5794,7 +5794,7 @@ def stringListToList(stringList):
 
     # Dummy check.
     if not (stringList.startswith( '[' ) and stringList.endswith( ']' )):
-        raise m + " ERROR: stringList does not start and end with square brackets. stringList=%s" % ( m, stringList, )
+        raise "%s ERROR: stringList does not start and end with square brackets. stringList=%s" % ( m, stringList, )
 
     # Strip off the leading and trailing square brackets.
     stringList = stringList[1:(len(stringList) - 1)]
