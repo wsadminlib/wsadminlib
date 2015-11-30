@@ -1294,7 +1294,7 @@ def deleteProxyServerByNodeAndName( nodename, name ):
     node_id = getNodeId(nodename)
     sid = getProxyServerByNodeAndName( node_id, name )
     if not sid:
-        raise "Could not find proxy server %s in node Ts to delete" % ( name, node_id )
+        raise "Could not find proxy server %s in node %s to delete" % ( name, nodename )
     AdminConfig.remove( sid )
 
 def getSIPProxySettings( nodename, servername ):
@@ -5710,7 +5710,7 @@ def propsToLists(propString):
 
     # Check for leading and trailing square brackets.
     if not (propString.startswith( '[ [' ) and propString.endswith( '] ]' )):
-        raise "ERROR: propString does not start and end with two square brackets. propString=%s" % ( m, propString, )
+        raise "%s ERROR: propString does not start and end with two square brackets. propString=%s" % ( m, propString, )
 
     # Strip off the leading and trailing square brackets.
     propString = propString[3:(len(propString) - 3)]
@@ -5793,7 +5793,7 @@ def stringListToList(stringList):
 
     # Dummy check.
     if not (stringList.startswith( '[' ) and stringList.endswith( ']' )):
-        raise m + " ERROR: stringList does not start and end with square brackets. stringList=%s" % ( m, stringList, )
+        raise "%s ERROR: stringList does not start and end with square brackets. stringList=%s" % ( m, stringList, )
 
     # Strip off the leading and trailing square brackets.
     stringList = stringList[1:(len(stringList) - 1)]
