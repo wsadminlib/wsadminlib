@@ -2532,6 +2532,19 @@ def setPluginLogLevel(servername, nodename, level):
     #sop(m,"plgProps=%s " % plgProps)
     AdminConfig.modify(plgProps, [['LogLevel', level ]])
     #sop(m,"Exit. ")
+
+def setWebServerPluginProp(nodename, servername, pName, pValue):
+    '''sets a WAS Plugin custom property'''
+    m = "setWebServerPluginProp:"
+    #sop(m,"Entry. ")
+    webserver = getServerByNodeAndName(nodename, servername)
+    #sop(m,"webserver=%s " % webserver)
+    plgProps = AdminConfig.list('PluginProperties', webserver)
+    AdminConfig.create('Property', plgProps, [['name',pName], ['description', "PLG.Config Prop"], ['value', pValue]])
+    #sop(m,"plgProps=%s " % plgProps)
+    #sop(m,"Exit. ")
+
+
 ############################################################
 # CEA related methods
 
