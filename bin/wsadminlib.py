@@ -430,13 +430,11 @@ def setInitialStateOfAllListenerPortsInCluster(clusterName, state):
     """Set the initial state of all Listener Ports that are defined in each server in a cluster."""
     # state is STOP or START
     m = "setInitialStateOfAllListenerPortsInCluster:"
-    sop(m,"clusterName = %s, state = %s" % (clusterName, state) )
-    clusterMembers = listServersInCluster(clusterName)
-    for clusterMember in clusterMembers:
-        nodeName = AdminConfig.showAttribute( clusterMember, "nodeName" )
-        serverName = AdminConfig.showAttribute( clusterMember, "memberName" )
+    sop(m, "clusterName = %s, state = %s" % (clusterName, state) )
+    serverIDList = getServerIDsForClusters([clusterName])
+    for (serverID, nodeName, serverName) in serverIDList:
         sop(m, "Setting Initial State of ListenerPorts on Server %s on Node %s to %s" % (serverName, nodeName, state))
-        lPorts = listListenerPortsOnServer( nodeName, serverName )
+        lPorts = getObjectsOfType('ListenerPort', serverID)
         for lPort in lPorts:
             sop(m, "Setting ListenerPort %s initial state to %s" % (lPort, state))
             stateManagement = AdminConfig.showAttribute( lPort, "stateManagement" )
