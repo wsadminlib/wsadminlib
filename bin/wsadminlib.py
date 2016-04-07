@@ -432,9 +432,13 @@ def setInitialStateOfAllListenerPortsInCluster(clusterName, state):
     m = "setInitialStateOfAllListenerPortsInCluster:"
     sop(m, "clusterName = %s, state = %s" % (clusterName, state) )
     serverIDList = getServerIDsForClusters([clusterName])
+    if not serverIDList:
+        raise m + " Error: Could not find any servers in the cluster. clusterName=%s" % (clusterName,)
     for (serverID, nodeName, serverName) in serverIDList:
         sop(m, "Setting Initial State of ListenerPorts on Server %s on Node %s to %s" % (serverName, nodeName, state))
         lPorts = getObjectsOfType('ListenerPort', serverID)
+        if not lPorts:
+            raise m + " Error: Could not find any ListenerPorts in the server. nodeName=%s serverName=%s" % (nodeName, serverName)
         for lPort in lPorts:
             sop(m, "Setting ListenerPort %s initial state to %s" % (lPort, state))
             stateManagement = AdminConfig.showAttribute( lPort, "stateManagement" )
