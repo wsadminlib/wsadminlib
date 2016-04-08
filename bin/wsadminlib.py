@@ -3699,19 +3699,7 @@ def updateApplication(filename):
     """Update an application with a new ear file"""
     # We need to know the application name - it's in an xml file
     # in the ear
-    import zipfile
-    zf = zipfile.ZipFile(filename, "r")
-    appxml = zf.read("META-INF/application.xml")
-    zf.close()
-
-    # parse the xml file
-    # (cheat - it's simple)
-    start_string = "<display-name>"
-    end_string = "</display-name>"
-    start_index = appxml.find(start_string) + len(start_string)
-    end_index = appxml.find(end_string)
-
-    appname = appxml[start_index:end_index].strip()
+    appname = getAppNameFromZip(filename)
 
     AdminApp.update(appname,            # name of application
                     'app',              # type of update to do
@@ -3950,10 +3938,13 @@ def _whatEnv():
 
 def getCellName():
     """Return the name of the cell we're connected to"""
+    m = "getCellName:"
     # AdminControl.getCell() is simpler, but only
     # available if we're connected to a running server.
     cellObjects = getObjectsOfType('Cell')  # should only be one
+    sop(m, "Got Cell objects %s" % (cellObjects))
     cellname = getObjectAttribute(cellObjects[0], 'name')
+    sop(m, "Got cell name %s" % (cellname))
     return cellname
 
 def getCellId(cellname = None):
@@ -4317,7 +4308,11 @@ def getNodeNameList(platform=None,servertype=None):
 
 def getNodeId( nodename ):
     """Given a node name, get its config ID"""
-    return AdminConfig.getid( '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) )
+    m = "getNodeId:"
+    sop(m, "About to get node %s" % (nodename))
+    config_string =  '/Cell:%s/Node:%s/' % ( getCellName(), nodename ) 
+    sop(m, "Trying to get ID with the following string: %s" % (config_string))
+    return AdminConfig.getid(config_string)
 
 def getNodeIdWithCellId ( cellname, nodename ):
      """Given a cell name and node name, get its config ID"""
@@ -4337,6 +4332,7 @@ def getWasProfileRoot(nodename):
 
 def getServerId(nodename,servername):
     """Return the config id for a server or proxy.  Could be an app server or proxy server, etc"""
+    sop('getServerId', "About to get object for node %s and server %s" % (nodename, servername))
     id = getObjectByNodeAndName(nodename, "Server", servername) # app server
     if id == None:
         id = getObjectByNodeAndName(nodename, "ProxyServer", servername)
@@ -4367,7 +4363,10 @@ def getObjectByNodeAndName( nodename, typename, objectname ):
     """Get the config object ID of an object based on its node, type, and name"""
     # This version of getObjectByName distinguishes by node,
     # which should disambiguate some things...
+    m = "getObjectByNodeAndName:"
+    sop(m, "About to get object for node %s and object %s, of type %s" % (nodename, objectname, typename))
     node_id = getNodeId(nodename)
+    sop(m, "Got node ID %s" % (node_id))
     all = _splitlines(AdminConfig.list( typename, node_id ))
     result = None
     for obj in all:
@@ -10626,4 +10625,68 @@ def removeAllDisabledSessionCookies() :
     return AdminTask.listDisabledSessionCookie()
 
 #end_def
+
+def getQueueConnectionFactoryNames():
+    """ A convenient way to get a list of the names of the configured queue connection factories, without the client 
+        having to know the particular type name to pass.
+    """
+    qcf_names = []
+    for qcf in getObjectsOfType('ConnectionFactory'):
+        qcf_names.append(getObjectAttribute(qcf, 'name'))
+    #endfor
+    
+    return qcf_names
+#end_def
+
+def getMQQueues():
+    """ A convenient way to get a list of the names of the configured WebSphere MQ queues, without the client
+        having to know the particular type name to pass.
+    """
+    queue_names = []
+    for queue in getObjectsOfType('MQQueue'):
+        queue_names.append(getObjectAttribute(queue, 'name'))
+    #endfor
+    
+    return queue_names
+
+def getAppNameFromZip(filename):
+    """Get the  application name - it's in an xml file in the ear."""
+    import zipfile
+    zf = zipfile.ZipFile(filename, "r")
+    appxml = zf.read("META-INF/application.xml")
+    zf.close()
+
+    # parse the xml file
+    # (cheat - it's simple)
+    start_string = "<display-name>"
+    end_string = "</display-name>"
+    start_index = appxml.find(start_string) + len(start_string)
+    end_index = appxml.find(end_string)
+
+    appname = appxml[start_index:end_index].strip()
+    return appname
+
+def stopApplication(appname):
+    """ Stop the named application on all its servers.
+        Copied from startApplication()
+
+        Note: This method assumes the application is installed on all servers.
+        To start an application on an individual server, use stopApplicationOnServer()
+        To start an application on all members of a cluster, use stopApplicationOnCluster()
+    """
+    m = "stopApplication:"
+    sop(m,"Entry. appname=%s" % ( appname ))
+    cellname = getCellName()
+    servers = listServersOfType('APPLICATION_SERVER')
+    for (nodename,servername) in servers:
+        sop(m,"Handling cellname=%s nodename=%s servername=%s" % 
+            ( cellname, nodename, servername ))
+        # Get the application manager MBean
+        appManager = AdminControl.queryNames(
+            'cell=%s,node=%s,type=ApplicationManager,process=%s,*' % 
+            (cellname,nodename,servername))
+        # start it
+        sop(m,"Stopping appname=%s" % ( appname ))
+        AdminControl.invoke(appManager, 'stopApplication', appname)
+    sop(m,"Exit.")
 
