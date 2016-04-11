@@ -1229,7 +1229,6 @@ def stopAllBusinessProcessTemplatesForApplication(nodeName, serverName, applicat
 
 def getProxyServerByNodeAndName( nodename, servername ):
     """return the config object ID for the named proxy server"""
-    # node_id = getNodeId(nodename)
     return getObjectByNodeAndName( nodename, 'ProxyServer', servername )
 
 def sopAdminTaskCreate(arg1, arg2, arg3):
