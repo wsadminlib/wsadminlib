@@ -4337,8 +4337,8 @@ def getWasProfileRoot(nodename):
 
 def getServerId(nodename,servername):
     """Return the config id for a Server."""
-    #TODO: This duplicates functionality of getServerByNodeAndName(). However, getServerId() is used elsewhere in the library.
-    return getObjectByNodeAndName(nodename, 'Server', servername)
+    #TODO: This mirrors the functionality of getServerByNodeAndName(). However, getServerId() is used elsewhere in the library.
+    return getServerByNodeAndName(nodename, servername)
 
 def getObjectByNodeServerAndName( nodename, servername, typename, objectname ):
     """Get the config object ID of an object based on its node, server, type, and name"""
