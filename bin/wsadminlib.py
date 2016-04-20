@@ -4336,11 +4336,9 @@ def getWasProfileRoot(nodename):
     return getWebSphereVariable("USER_INSTALL_ROOT", nodename)
 
 def getServerId(nodename,servername):
-    """Return the config id for a server or proxy.  Could be an app server or proxy server, etc"""
-    id = getObjectByNodeAndName(nodename, "Server", servername) # app server
-    if id == None:
-        id = getObjectByNodeAndName(nodename, "ProxyServer", servername)
-    return id
+    """Return the config id for a Server."""
+    #TODO: This mirrors the functionality of getServerByNodeAndName(). However, getServerId() is used elsewhere in the library.
+    return getServerByNodeAndName(nodename, servername)
 
 def getObjectByNodeServerAndName( nodename, servername, typename, objectname ):
     """Get the config object ID of an object based on its node, server, type, and name"""
