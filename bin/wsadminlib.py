@@ -5038,15 +5038,13 @@ def createChain(nodename,servername,chainname,portname,hostname,portnumber,templ
 
     # We'll need the transport channel service for that server
     server = getServerByNodeAndName(nodename,servername)
-    if not server:
-        server = getProxyServerByNodeAndName(nodename, servername)  # Could be a proxy too
-    if not server:
+    if server is None:
         raise "ERROR: createChain: Cannot find server or proxy on %s named %s" % (nodename,servername)
-    transportchannelservice = _splitlines(AdminConfig.list('TransportChannelService', server))[0]
+    transportchannelservice = getObjectsOfType('TransportChannelService', scope = server)[0] # There should be only one
 
     # Does the end point exist already?
     endpoint = getEndPoint(nodename,servername,portname)
-    if endpoint == None:
+    if endpoint is None:
         endpoint = AdminTask.createTCPEndPoint(transportchannelservice,
                                                '[-name %s -host %s -port %d]' % (portname,hostname,portnumber))
     AdminTask.createChain(transportchannelservice,
