@@ -730,13 +730,15 @@ def getServerIDsForAllAppServers ():
     return serverIDList
 #enddef
 
-
 def deleteServerByNodeAndName( nodename, servername ):
     """Delete the named server - raises exception on error"""
+    m = "deleteServerByNodeAndName:"
+    sop(m,"Entry. nodename=%s servername=%s" % ( nodename, servername ))
     sid = getServerByNodeAndName( nodename, servername )
-    if not sid:
-        raise "Could not find server %s to delete" % servername
+    if sid is None:
+        raise m + " Error: Could not find server. nodename=%s servername=%s" % (nodename,servername)
     AdminTask.deleteServer( '[-serverName %s -nodeName %s ]' % ( servername, nodename ) )
+    sop(m, "Exit.")
 
 def deleteServersOfType( typeToDelete ):
     """Delete all servers of the given type.
@@ -1290,13 +1292,9 @@ def setSIPProxyEnableAccessLog(nodename, servername, trueOrFalse):
     sid = getSIPProxySettings(nodename,servername)
     AdminConfig.modify(sid, [['enableAccessLog',trueOrFalse]])
 
-def deleteProxyServerByNodeAndName( nodename, name ):
+def deleteProxyServerByNodeAndName( nodename, servername ):
     """Delete the named proxy server"""
-    node_id = getNodeId(nodename)
-    sid = getProxyServerByNodeAndName( node_id, name )
-    if not sid:
-        raise "Could not find proxy server %s in node %s to delete" % ( name, nodename )
-    AdminConfig.remove( sid )
+    deleteServerByNodeAndName( nodename, servername )
 
 def getSIPProxySettings( nodename, servername ):
     """Given a proxy server ID, return the ID of the SIPProxySettings object, or None if there is none"""
