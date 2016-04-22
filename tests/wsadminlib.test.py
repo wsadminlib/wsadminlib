@@ -1,7 +1,7 @@
 """
     This file contains unit tests for wsadminlib.py
     Includes testcases for both:
-        - single-server (aka base) envirnnmants, and
+        - single-server (aka base) environments, and
         - clustered (aka ND) environments.
 
     Please add testcases when you add or fix methods in wsadminlib.py
