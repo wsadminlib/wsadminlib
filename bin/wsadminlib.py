@@ -5033,20 +5033,26 @@ def deleteAllHostAliases( virtualhostname ):
 def createChain(nodename,servername,chainname,portname,hostname,portnumber,templatename):
     """Create a new transport chain.  You can figure out most of the needed arguments
     by doing this in the admin console once.  Write down the template name so you can use it here."""
-
+    m = "createChain:"
+    sop(m,"Entry. nodename=%s servername=%s chainname=%s templatename=%s" % ( nodename, servername, chainname, templatename ))
     # We'll need the transport channel service for that server
     server = getServerByNodeAndName(nodename,servername)
     if server is None:
-        raise "ERROR: createChain: Cannot find server or proxy on %s named %s" % (nodename,servername)
+        raise m + " Error: Could not find server. nodename=%s servername=%s" % (nodename,servername)
+    sop(m,"Found config id for server. server=%s" % ( server, ))
     transportchannelservice = getObjectsOfType('TransportChannelService', scope = server)[0] # There should be only one
-
+    sop(m,"Found config id for transport channel service. transportchannelservice=%s" % ( transportchannelservice, ))
     # Does the end point exist already?
     endpoint = getEndPoint(nodename,servername,portname)
     if endpoint is None:
         endpoint = AdminTask.createTCPEndPoint(transportchannelservice,
                                                '[-name %s -host %s -port %d]' % (portname,hostname,portnumber))
-    AdminTask.createChain(transportchannelservice,
+    sop(m,"Attempting to create transport chain at endpoint. endpoint=%s" % ( endpoint, ))
+    result = AdminTask.createChain(transportchannelservice,
                           '[-template %s -name %s -endPoint %s]' % (templatename,chainname,endpoint))
+    sop(m,"Resulting config id for transport chain. result=%s" % ( result, ))
+    sop(m,"Exit.")
+    return result
 
 
     # Example from command assistance:
