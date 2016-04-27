@@ -2536,15 +2536,19 @@ def setPluginLogLevel(servername, nodename, level):
     #sop(m,"Exit. ")
 
 def setWebServerPluginProp(nodename, servername, pName, pValue):
-    '''sets a WAS Plugin custom property'''
+    '''sets a web server plugin custom property'''
     m = "setWebServerPluginProp:"
-    #sop(m,"Entry. ")
+    sop(m,"Entry.")
     webserver = getServerByNodeAndName(nodename, servername)
-    #sop(m,"webserver=%s " % webserver)
-    plgProps = AdminConfig.list('PluginProperties', webserver)
-    AdminConfig.create('Property', plgProps, [['name',pName], ['description', "PLG.Config Prop"], ['value', pValue]])
-    #sop(m,"plgProps=%s " % plgProps)
-    #sop(m,"Exit. ")
+    sop(m,"webserver=%s" % (webserver))
+    # If we found a valid Server config id and the server is indeed a web server...
+    if webserver is not None and getObjectAttribute(webserver, 'serverType') == 'WEB_SERVER':
+       plgProps = getObjectsOfType('PluginProperties', scope = webserver)[0] #There will be only one
+       sop(m,"plgProps=%s" % (plgProps))
+       setCustomPropertyOnObject(plgProps, pName, pValue)
+       sop(m,"Exit.")
+    else:
+       raise m + " ERROR: server is not valid. nodename=%s servername=%s" % (nodename, servername)
 
 
 ############################################################
