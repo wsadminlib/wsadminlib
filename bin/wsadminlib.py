@@ -730,13 +730,15 @@ def getServerIDsForAllAppServers ():
     return serverIDList
 #enddef
 
-
 def deleteServerByNodeAndName( nodename, servername ):
     """Delete the named server - raises exception on error"""
+    m = "deleteServerByNodeAndName:"
+    sop(m,"Entry. nodename=%s servername=%s" % ( nodename, servername ))
     sid = getServerByNodeAndName( nodename, servername )
-    if not sid:
-        raise "Could not find server %s to delete" % servername
+    if sid is None:
+        raise m + " Error: Could not find server. nodename=%s servername=%s" % (nodename,servername)
     AdminTask.deleteServer( '[-serverName %s -nodeName %s ]' % ( servername, nodename ) )
+    sop(m, "Exit.")
 
 def deleteServersOfType( typeToDelete ):
     """Delete all servers of the given type.
@@ -1229,7 +1231,6 @@ def stopAllBusinessProcessTemplatesForApplication(nodeName, serverName, applicat
 
 def getProxyServerByNodeAndName( nodename, servername ):
     """return the config object ID for the named proxy server"""
-    # node_id = getNodeId(nodename)
     return getObjectByNodeAndName( nodename, 'ProxyServer', servername )
 
 def sopAdminTaskCreate(arg1, arg2, arg3):
@@ -1291,13 +1292,9 @@ def setSIPProxyEnableAccessLog(nodename, servername, trueOrFalse):
     sid = getSIPProxySettings(nodename,servername)
     AdminConfig.modify(sid, [['enableAccessLog',trueOrFalse]])
 
-def deleteProxyServerByNodeAndName( nodename, name ):
+def deleteProxyServerByNodeAndName( nodename, servername ):
     """Delete the named proxy server"""
-    node_id = getNodeId(nodename)
-    sid = getProxyServerByNodeAndName( node_id, name )
-    if not sid:
-        raise "Could not find proxy server %s in node %s to delete" % ( name, nodename )
-    AdminConfig.remove( sid )
+    deleteServerByNodeAndName( nodename, servername )
 
 def getSIPProxySettings( nodename, servername ):
     """Given a proxy server ID, return the ID of the SIPProxySettings object, or None if there is none"""
@@ -5036,22 +5033,26 @@ def deleteAllHostAliases( virtualhostname ):
 def createChain(nodename,servername,chainname,portname,hostname,portnumber,templatename):
     """Create a new transport chain.  You can figure out most of the needed arguments
     by doing this in the admin console once.  Write down the template name so you can use it here."""
-
+    m = "createChain:"
+    sop(m,"Entry. nodename=%s servername=%s chainname=%s templatename=%s" % ( nodename, servername, chainname, templatename ))
     # We'll need the transport channel service for that server
     server = getServerByNodeAndName(nodename,servername)
-    if not server:
-        server = getProxyServerByNodeAndName(nodename, servername)  # Could be a proxy too
-    if not server:
-        raise "ERROR: createChain: Cannot find server or proxy on %s named %s" % (nodename,servername)
-    transportchannelservice = _splitlines(AdminConfig.list('TransportChannelService', server))[0]
-
+    if server is None:
+        raise m + " Error: Could not find server. nodename=%s servername=%s" % (nodename,servername)
+    sop(m,"Found config id for server. server=%s" % ( server, ))
+    transportchannelservice = getObjectsOfType('TransportChannelService', scope = server)[0] # There should be only one
+    sop(m,"Found config id for transport channel service. transportchannelservice=%s" % ( transportchannelservice, ))
     # Does the end point exist already?
     endpoint = getEndPoint(nodename,servername,portname)
-    if endpoint == None:
+    if endpoint is None:
         endpoint = AdminTask.createTCPEndPoint(transportchannelservice,
                                                '[-name %s -host %s -port %d]' % (portname,hostname,portnumber))
-    AdminTask.createChain(transportchannelservice,
+    sop(m,"Attempting to create transport chain at endpoint. endpoint=%s" % ( endpoint, ))
+    result = AdminTask.createChain(transportchannelservice,
                           '[-template %s -name %s -endPoint %s]' % (templatename,chainname,endpoint))
+    sop(m,"Resulting config id for transport chain. result=%s" % ( result, ))
+    sop(m,"Exit.")
+    return result
 
 
     # Example from command assistance:
