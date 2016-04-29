@@ -1,0 +1,17 @@
+box: 
+  id: gpoul/websphere-traditional
+  username: $USERNAME
+  password: $PASSWORD
+  tag: arquillian-wasv9-ci
+
+build:
+  steps:
+    - script:
+        code: |
+          /opt/IBM/WebSphere/AppServer/profiles/AppSrv01/bin/startServer.sh server1
+          # need to switch directories for hitcount0.ear to be found
+          cd tests
+          # need to call bash because ubuntu's default is dash and doesn't play well with wsadmin.sh
+          bash /opt/IBM/WebSphere/AppServer/bin/wsadmin.sh -lang jython -port 8880 \
+            -c "execfile('../bin/wsadminlib.py');execfile('./wsadminlib.test.py'); testBase()"
+          /opt/IBM/WebSphere/AppServer/profiles/AppSrv01/bin/stopServer.sh server1
