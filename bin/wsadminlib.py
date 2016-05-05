@@ -4354,7 +4354,7 @@ def getObjectByNodeServerAndName( nodename, servername, typename, objectname ):
         name = AdminConfig.showAttribute( obj, 'name' )
         if name == objectname:
             #sop(m,"Found sought name=%s objectname=%s" % ( repr(name), repr(objectname), ))
-            if -1 != repr( obj ).find( 'servers/' + servername ):
+            if -1 != repr( obj ).find( 'servers/' + servername + '|' ):
                 #sop(m,"Found sought servername=%s" % ( repr(servername), ))
                 if result != None:
                     raise "FOUND more than one %s with name %s" % ( typename, objectname )
