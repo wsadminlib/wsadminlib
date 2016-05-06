@@ -349,6 +349,57 @@ def testClusters(cfg):
 
     sop(m,"Exit. Success.")
 
+
+#-----------------------------------------------------------------------
+# getObjectByNodeServerAndName()
+#-----------------------------------------------------------------------
+def testGetObjectByNodeServerAndName(cfg):
+    """Tests the getObjectByNodeServerAndName() function."""
+    m = "testGetObjectByNodeServerAndName:"
+    sop(m,"Entry.")
+
+    nodeName = cfg["nodeName"]
+
+    serverName1  = 'wsadminlibsrv1'
+    serverName11 = 'wsadminlibsrv11'
+
+    serverId1  = createServer(nodeName, serverName1)
+    serverId11 = createServer(nodeName, serverName11)
+
+    # These two calls should succeed
+    tp1  = getObjectByNodeServerAndName( nodeName, serverName1, 'ThreadPool', 'WebContainer')
+    tp11 = getObjectByNodeServerAndName( nodeName, serverName11, 'ThreadPool', 'WebContainer')
+    # ...and the config id for the threadPool objects should not be equal
+    if tp1 == tp11:
+        errbrk(m, "config id for the threadPool objects should not be equal. tp1=" + tp1 + " tp11: " + tp11)
+
+    exceptionMessage1 = ""
+    exceptionMessage11 = ""
+    # "nil" will be in retval(1|11) if it threw an exception
+    retval1 = "nil"
+    retval11 = "nil"
+
+    try:
+        retval1 = getObjectByNodeServerAndName( nodeName, serverName1, 'Property', 'requestTimeout')
+    except:
+        ( exceptionMessage1, parms, tback ) = sys.exc_info()
+
+    try:
+        retval11 = getObjectByNodeServerAndName( nodeName, serverName11, 'Property', 'requestTimeout')
+    except:
+        ( exceptionMessage11, parms, tback ) = sys.exc_info()
+
+    if (exceptionMessage1 != "FOUND more than one Property with name requestTimeout" or
+            exceptionMessage11 != "FOUND more than one Property with name requestTimeout"):
+        sop(m,"getObjectByNodeServerAndName returned %s/%s" % ( repr( retval1 ), repr ( retval11 ) ))
+        errbrk(m,"getObjectByNodeServerAndName did not raise expected exception message")
+
+    deleteServerByNodeAndName(nodeName, serverName1)
+    deleteServerByNodeAndName(nodeName, serverName11)
+
+    sop(m,"Exit. Success.")
+
+
 #-----------------------------------------------------------------------
 # Full suites.
 #-----------------------------------------------------------------------
@@ -370,6 +421,7 @@ def testBase():
     testVirtualHost(cfg)
     testClassloaders(cfg)
     testClusters(cfg)
+    testGetObjectByNodeServerAndName(cfg)
     sop(m,"Exit success. cfg=" + repr(cfg))
 
 def testND():
