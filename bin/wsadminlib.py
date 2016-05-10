@@ -1230,8 +1230,21 @@ def stopAllBusinessProcessTemplatesForApplication(nodeName, serverName, applicat
 # proxy-related methods
 
 def getProxyServerByNodeAndName( nodename, servername ):
-    """return the config object ID for the named proxy server"""
-    return getObjectByNodeAndName( nodename, 'ProxyServer', servername )
+    """return the config ID for the proxy server component of named proxy server"""
+    m = "getProxyServerByNodeAndName:"
+    sop(m,"Entry. nodename=%s servername=%s" % ( nodename, servername ))
+    serverid = getServerByNodeAndName( nodename, servername )
+    sop(m,"serverid=%s" % (serverid))
+    result = None
+    # Verify that serverid valid and is indeed a proxy server. The subtype 'ProxyServer'
+    # is only found within proxy servers.
+    if serverid is not None and getObjectAttribute(serverid, 'serverType') == 'PROXY_SERVER':
+        # Retrieve the proxy server component, subtype 'ProxyServer'. There will be only one.
+        result = getObjectsOfType('ProxyServer', scope = serverid)[0]
+        sop(m,"Exit. Found proxy server component. result=%s" % (result))
+    else:
+        sop(m,"Exit. Proxy server component not found. result is None.")
+    return result
 
 def sopAdminTaskCreate(arg1, arg2, arg3):
     """For debug only"""
