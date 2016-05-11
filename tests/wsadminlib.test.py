@@ -91,6 +91,13 @@ def testAndGetNamesBase(cfg):
 
     sop(m,"Exit success.")
 
+    sop(m,"Entry.")
+
+    # Verify we are running in an ND environment.
+    env = whatEnv()
+    if 'nd' != env:
+        errbrk(m,"Environment is not 'nd'. env=%s" % env)
+    sop(m,"env=%s" % env)
 #-----------------------------------------------------------------------
 # Logging and tracing.
 #-----------------------------------------------------------------------
