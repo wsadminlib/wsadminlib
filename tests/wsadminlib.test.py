@@ -393,6 +393,42 @@ def testClusters(cfg):
 
 
 #-----------------------------------------------------------------------
+# Proxy Servers
+#-----------------------------------------------------------------------
+def testProxyServer(cfg):
+    """Tests the proxy server functions."""
+    m = "testProxyServer:"
+    sop(m,"Entry.")
+
+    nodeName = cfg["nodeName"]
+    serverName = 'wsadminlibproxysrv'
+    templatename = 'proxy_server'
+
+    # Create a proxy server
+    sop(m,"Create a proxy server. nodeName=%s serverName=%s templatename=%s" % ( nodeName, serverName, templatename ))
+    serverId = createProxyServerWithTemplate( nodeName, serverName, templatename )
+    sop(m,"Config ID returned. serverId=%s" % serverId)
+    # Validate the config ID return
+    if serverId is None:
+        errbrk(m,"createProxyServerWithTemplate did not return a valid config ID")
+    
+    # Obtain the config ID of the ProxyServer component
+    proxyId = getProxyServerByNodeAndName( nodeName, serverName )
+    sop(m,"ProxyServer component. proxyId=%s" % proxyId)
+    # Validate the config ID return
+    if proxyId is None:
+        errbrk(m,"getProxyServerByNodeAndName returned None.")
+    if proxyId not in _splitlines(AdminConfig.list('ProxyServer')):
+        errbrk(m,"getProxyServerByNodeAndName did not return a valid config ID")
+    
+    # Clean up
+    sop(m,"Delete a proxy server. nodeName=%s serverName=%s" % ( nodeName, serverName ))
+    deleteProxyServerByNodeAndName(nodeName, serverName)
+
+    sop(m,"Exit. Success.")
+
+
+#-----------------------------------------------------------------------
 # getObjectByNodeServerAndName()
 #-----------------------------------------------------------------------
 def testGetObjectByNodeServerAndName(cfg):
@@ -484,9 +520,8 @@ def testND():
     testClassloaders(cfg)
     # TODO: Remove the call to testClusters() from testBase(). Update testClusters() so that it does meaningful tests for an ND environment.
     testClusters(cfg)
+    testProxyServer(cfg)
     testGetObjectByNodeServerAndName(cfg)
-    # TODO: Implement testProxyServer()
-    #testProxyServer(cfg)
     sop(m,"Exit. Success.")
 
 
