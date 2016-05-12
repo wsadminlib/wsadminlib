@@ -91,6 +91,48 @@ def testAndGetNamesBase(cfg):
 
     sop(m,"Exit success.")
 
+def testAndGetNamesND(cfg):
+    """Gets names for the cell, node, server, etc in an ND environment.
+       Stores the values in provided dictionary cfg."""
+    m = "testAndGetNamesND:"
+    sop(m,"Entry.")
+
+    # Verify we are running in an ND environment.
+    env = whatEnv()
+    if 'nd' != env:
+        errbrk(m,"Environment is not 'nd'. env=%s" % env)
+    sop(m,"env=%s" % env)
+
+    # Get cell name.
+    cellName = getCellName()
+    if 2 > len(cellName):
+        errbrk(m,"Cell name is unreasonably small.  cellName=%s" % cellName)
+    sop(m,"cellName=%s" % cellName)
+
+    # Get node name.
+    # Find at least one managed node.
+    nodeNameList = listAppServerNodes()
+    if len(nodeNameList) == 0:
+        errbrk(m,"Node name list does not contain any names.")
+    nodeName = nodeNameList[0]
+    if 2 > len(nodeName):
+        errbrk(m,"Node name is unreasonably small.  nodeName=%s" % nodeName)
+    sop(m,"nodeName=%s" % nodeName)
+    
+    # Create an server.
+    serverName = 'wsadminlibsrv'
+    serverID = createServer(nodeName, serverName)
+    if serverID is None:
+        errbrk(m,"Failed to create a server.")
+
+    # Save the names for use by other testcases.
+    cfg["cellName"] = cellName
+    cfg["nodeName"] = nodeName
+    cfg["serverName"] = serverName
+    cfg["serverID"] = serverID
+
+    sop(m,"Exit success.")
+
 #-----------------------------------------------------------------------
 # Logging and tracing.
 #-----------------------------------------------------------------------
@@ -431,8 +473,20 @@ def testND():
     sop(m,"Entry.")
 
     cfg = {}
-    # TBD
-
-    sop(m,"Exit success. cfg=" + repr(cfg))
+    testAndGetNamesND(cfg)
+    testLogTrace(cfg)
+    testApps(cfg)
+    testSIPCustomProps(cfg)
+    testORBProps(cfg)
+    testWebContainerProps(cfg)
+    testWebSphereVariables(cfg)
+    testVirtualHost(cfg)
+    testClassloaders(cfg)
+    # TODO: Remove the call to testClusters() from testBase(). Update testClusters() so that it does meaningful tests for an ND environment.
+    testClusters(cfg)
+    testGetObjectByNodeServerAndName(cfg)
+    # TODO: Implement testProxyServer()
+    #testProxyServer(cfg)
+    sop(m,"Exit. Success.")
 
 
