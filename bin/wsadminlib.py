@@ -8800,6 +8800,18 @@ def createStandaloneApplicationServerMapping(customadvisorname,nodename,serverna
     return AdminConfig.create("StandAloneApplicationServerMapping",customadvisorname, [["nodeName",nodename],["serverName", servername],["cellName", cellname],["applicationName", applicationname]])
 
 ###############################################################################
+# Namespace bindings
+
+def createStringNameSpaceBinding(scope, bindingName, nameInNameSpace, stringToBind):
+    """Configuring String namespace binding
+    scope           - objectId
+    bindingName     - Specifies a name that uniquely identifies this configured binding.
+    nameInNameSpace - Specifies a name for this binding in the name space. It is a simple or compound name relative to the portion of the name space where this binding is configured.
+    stringToBind    - Specifies the string to be bound into the name space.
+    """
+    return AdminConfig.create("StringNameSpaceBinding", scope, [["name", bindingName], ["nameInNameSpace", nameInNameSpace], ["stringToBind", stringToBind]])
+
+###############################################################################
 # Wrapper definitions for AdminConfig (logs activity automatically)
 
 def modify( object, attrs ):
