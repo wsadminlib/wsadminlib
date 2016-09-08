@@ -8804,11 +8804,25 @@ def createStandaloneApplicationServerMapping(customadvisorname,nodename,serverna
 
 def createStringNameSpaceBinding(scope, bindingName, nameInNameSpace, stringToBind):
     """Configuring String namespace binding
-    scope           - objectId
+
+    scope           - objectId is the configuration ID of a cell, a node, or a server object(because we are using AdminConfig.list)
     bindingName     - Specifies a name that uniquely identifies this configured binding.
     nameInNameSpace - Specifies a name for this binding in the name space. It is a simple or compound name relative to the portion of the name space where this binding is configured.
     stringToBind    - Specifies the string to be bound into the name space.
     """
+
+    for ns in AdminConfig.list('StringNameSpaceBinding', scope).splitlines() :
+        if nameInNameSpace == AdminConfig.showAttribute( ns, 'nameInNameSpace' ) and bindingName != AdminConfig.showAttribute( ns, 'name' ) :
+            raise "ERROR: A binding with nameInNamespace %s is already configured in this scope for bindingName %s." % (AdminConfig.showAttribute( ns, 'nameInNameSpace' ), AdminConfig.showAttribute( ns, 'name' ))
+
+    for ns in AdminConfig.list('StringNameSpaceBinding', scope).splitlines() :
+        if bindingName == AdminConfig.showAttribute( ns, 'name' ):
+            print "The namespace binding %s already exist with nameInNameSpace %s and stringToBind %s." % (AdminConfig.showAttribute( ns, 'name' ), AdminConfig.showAttribute( ns, 'nameInNameSpace' ), AdminConfig.showAttribute( ns, 'stringToBind' ))
+            print "Overwriting with new values: nameInNameSpace %s, stringToBind %s." % (nameInNameSpace, stringToBind)
+            AdminConfig.modify(ns, [['nameInNameSpace', nameInNameSpace], ['stringToBind', stringToBind]])
+            return
+
+    print "Creating new namespace binding."
     return AdminConfig.create("StringNameSpaceBinding", scope, [["name", bindingName], ["nameInNameSpace", nameInNameSpace], ["stringToBind", stringToBind]])
 
 ###############################################################################
