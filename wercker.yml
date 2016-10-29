@@ -1,7 +1,5 @@
 box: 
-  id: gpoul/websphere-traditional
-  username: $USERNAME
-  password: $PASSWORD
+  id: gpoul/arquillian-websphere
   tag: arquillian-wasv9-ci
 
 build:
