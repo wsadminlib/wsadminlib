@@ -379,14 +379,17 @@ def testClusters(cfg):
     sop(m,"Entry.")
 
     exceptionMessage = ""
+    retval = "nil"
 
     try:
         retval = getServerIDsForClusters('NonExistantClusterName')
     except:
-        ( exceptionMessage, parms, tback ) = sys.exc_info()
+        ( type, parms, tback ) = sys.exc_info()
+        exceptionMessage = parms.args[0]
 
     if exceptionMessage != "getServerIDsForClusters only accepts a list as input":
         sop(m,"getServerIDsForClusters returned %s" % ( repr( retval ) ))
+        sop(m,"getServerIDsForClusters raised exception with message: %s" % ( repr( exceptionMessage ) ))
         errbrk(m,"getServerIDsForClusters did not raise expected exception message")
 
     sop(m,"Exit. Success.")
@@ -460,12 +463,14 @@ def testGetObjectByNodeServerAndName(cfg):
     try:
         retval1 = getObjectByNodeServerAndName( nodeName, serverName1, 'Property', 'requestTimeout')
     except:
-        ( exceptionMessage1, parms, tback ) = sys.exc_info()
+        ( type, parms, tback ) = sys.exc_info()
+        exceptionMessage1 = parms.args[0]
 
     try:
         retval11 = getObjectByNodeServerAndName( nodeName, serverName11, 'Property', 'requestTimeout')
     except:
-        ( exceptionMessage11, parms, tback ) = sys.exc_info()
+        ( type, parms, tback ) = sys.exc_info()
+        exceptionMessage11 = parms.args[0]
 
     if (exceptionMessage1 != "FOUND more than one Property with name requestTimeout" or
             exceptionMessage11 != "FOUND more than one Property with name requestTimeout"):

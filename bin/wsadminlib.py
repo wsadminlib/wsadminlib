@@ -612,7 +612,7 @@ def getServerIDsForClusters (clusterList):
     # Verify that clusterList is indeed a list
     if type(clusterList) != type([]):
         sop(m, 'clusterList is not a list; raising exception')
-        raise 'getServerIDsForClusters only accepts a list as input'
+        raise TypeError('getServerIDsForClusters only accepts a list as input')
 
     sop(m, 'Calling AdminConfig.list to get the list of clusters')
     clusters = _splitlines(AdminConfig.list ('ServerCluster'))
@@ -4370,7 +4370,7 @@ def getObjectByNodeServerAndName( nodename, servername, typename, objectname ):
             if -1 != repr( obj ).find( 'servers/' + servername + '|' ):
                 #sop(m,"Found sought servername=%s" % ( repr(servername), ))
                 if result != None:
-                    raise "FOUND more than one %s with name %s" % ( typename, objectname )
+                    raise AssertionError("FOUND more than one %s with name %s" % ( typename, objectname ))
                 result = obj
     #sop(m,"Exit. result=%s" % ( repr(result), ))
     return result
