@@ -9015,7 +9015,7 @@ def createDataSource_ext ( scope, clusterName, nodeName, serverName_scope, jdbcP
             dsProps.append( [ 'URL', 'java.lang.String', URL ] )
     elif dbType == 'Sybase2':
         if (databaseName == None or serverName == None or portNumber == None):
-            sop (m, "All required properties for a Sybase JDBC-2 datasource (databaseName, serverName, portNumber, driverType) were not specified.")
+            sop (m, "All required properties for a Sybase JDBC-2 datasource (databaseName, serverName, portNumber) were not specified.")
             retcode = 5
         else:
             dsProps.append( [ 'databaseName', 'java.lang.String',  databaseName ] )
@@ -9023,7 +9023,7 @@ def createDataSource_ext ( scope, clusterName, nodeName, serverName_scope, jdbcP
             dsProps.append( [ 'portNumber',   'java.lang.Integer', portNumber   ] )
     elif dbType == 'Sybase3':
         if (databaseName == None or serverName == None or portNumber == None):
-            sop (m, "All required properties for a Sybase JDBC-3 datasource (databaseName, serverName, portNumber, driverType) were not specified.")
+            sop (m, "All required properties for a Sybase JDBC-3 datasource (databaseName, serverName, portNumber) were not specified.")
             retcode = 6
         else:
             dsProps.append( [ 'databaseName', 'java.lang.String',  databaseName ] )
@@ -9041,9 +9041,17 @@ def createDataSource_ext ( scope, clusterName, nodeName, serverName_scope, jdbcP
                 dsProps.append( [ 'portNumber', 'java.lang.Integer', portNumber ] )
             if ifxIFXHOST:
                 dsProps.append( [ 'ifxIFXHOST', 'java.lang.String',  ifxIFXHOST ] )
+    elif dbType == 'Postgres':
+        if (databaseName == None or serverName == None or portNumber == None):
+            sop (m, "All required properties for a Postgres JDBC-3 datasource (databaseName, serverName, portNumber) were not specified.")
+            retcode = 6
+        else:
+            dsProps.append( [ 'databaseName', 'java.lang.String',  databaseName ] )
+            dsProps.append( [ 'serverName',   'java.lang.String',  serverName   ] )
+            dsProps.append( [ 'portNumber',   'java.lang.Integer', portNumber   ] )
     else:  # Invalid dbType specified
         sop (m, "Invalid dbType '%s' specified" % dbType)
-        retcode = 8
+        retcode = 9
     # end else
 
     if retcode == 0:
