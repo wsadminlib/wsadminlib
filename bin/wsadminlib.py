@@ -8915,6 +8915,15 @@ def createJdbcProvider ( parent, name, classpath, nativepath, implementationClas
         attrs.append( [ 'providerType', providerType ] )
     return removeAndCreate('JDBCProvider', parent, attrs, ['name'])
 
+def getJdbcProvider ( providerName ):
+    jdbcProviders = _splitlines(AdminConfig.list('JDBCProvider'))
+
+    for jdbcProvider in jdbcProviders:
+        name = AdminConfig.showAttribute(jdbcProvider, 'name')
+        if name == providerName:
+            return jdbcProvider
+    # endfor
+
 def removeJdbcProvidersByName ( providerName ):
     """Removes all the JDBCProvider objects with the specified name.  Implicitly deletes underlying DataSource objects."""
     findAndRemove('JDBCProvider', [['name', providerName]])
