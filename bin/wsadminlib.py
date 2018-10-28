@@ -62,6 +62,7 @@ Coding Standards
    Why? Consistent output, sexy timestamp, easy future enhancements.
 
 """
+from __future__ import print_function
 _modules = [
             'sys',
             'time',
@@ -81,7 +82,7 @@ for module in _modules:
   try:
     locals()[module] = __import__(module, {}, {}, [])
   except ImportError:
-    print 'Error importing %s.' % module
+    print('Error importing %s.' % module)
 
 # Provide access to wsadminlib methods when accessed as an import.
 # This is benign if wsadminlib is opened with execfile().
@@ -94,7 +95,7 @@ try:
     AdminControl = sys._getframe(1).f_locals['AdminControl']
     AdminTask = sys._getframe(1).f_locals['AdminTask']
 except:
-    print "Warning: Caught exception accessing Admin objects. Continuing."
+    print("Warning: Caught exception accessing Admin objects. Continuing.")
 
 # Define False, True
 (False,True)=(0,1)
@@ -610,7 +611,7 @@ def getServerIDsForClusters (clusterList):
     serverIDList = []
 
     # Verify that clusterList is indeed a list
-    if type(clusterList) != type([]):
+    if not isinstance(clusterList, type([])):
         sop(m, 'clusterList is not a list; raising exception')
         raise TypeError('getServerIDsForClusters only accepts a list as input')
 
@@ -4953,18 +4954,18 @@ def addHostAlias( virtualhostname, aliashostname, port ):
     # Force port to be a string - could be string or int on input
     port = "%d" % int( port )
 
-    print "adding host alias on %s: %s %s" % (virtualhostname, aliashostname, port)
+    print("adding host alias on %s: %s %s" % (virtualhostname, aliashostname, port))
     host_id = getVirtualHostByName(virtualhostname)
     if host_id == None:
         host_id = createVirtualHost(virtualhostname)
     new_alias = AdminConfig.create( 'HostAlias', host_id, [['hostname', aliashostname], ['port', port]] )
-    print "alias added for virtualhost %s hostname %s port %s" % (virtualhostname,aliashostname,port)
+    print("alias added for virtualhost %s hostname %s port %s" % (virtualhostname,aliashostname,port))
 
     configured_port = getObjectAttribute(new_alias, 'port')
     if configured_port != port:
         raise "ERROR: requested host alias port %s but got %s" % (port,configured_port)
     else:
-        print "wsadmin says the configured port is %s" % configured_port
+        print("wsadmin says the configured port is %s" % configured_port)
 
     if not hostAliasExists(virtualhostname, aliashostname, port):
         raise "ERROR: host alias does not exist after creating it"
@@ -5950,7 +5951,7 @@ def setChannelAttribute(nodename, servername, channeltype, channelname, attribut
         raise m + " Error. Channel not found. nodename=%s servername=%s channeltype=%s channelname=%s" % ( nodename, servername, channeltype, channelname, )
     try:
         AdminConfig.modify(channel, [[attributename, attributevalue]])
-        print m + " Exit. Success. Set channel attribute. nodename=%s servername=%s channeltype=%s channelname=%s attributename=%s attributevalue=%s" % ( nodename, servername, channeltype, channelname, attributename, repr(attributevalue), )
+        print(m + " Exit. Success. Set channel attribute. nodename=%s servername=%s channeltype=%s channelname=%s attributename=%s attributevalue=%s" % ( nodename, servername, channeltype, channelname, attributename, repr(attributevalue), ))
         return 0
     except:
         raise m + " Error. Could not set channel attribute. nodename=%s servername=%s channeltype=%s channelname=%s attributename=%s attributevalue=%s" % ( nodename, servername, channeltype, channelname, attributename, repr(attributevalue), )
@@ -6843,7 +6844,7 @@ def sop(methodname,message):
     global DEBUG_SOP
     if(DEBUG_SOP):
         timestamp = getSopTimestamp()
-        print "%s %s %s" % (timestamp, methodname, message)
+        print("%s %s %s" % (timestamp, methodname, message))
 
 def emptyString(strng):
     """Returns True if the string is null or empty."""
@@ -6883,7 +6884,7 @@ def _doAuthenticationMechanism(domainHostname):
         try:
             AdminConfig.modify(ltpaId, attrs1)
         except:
-            print "AdminConfig.modify(%s,%s) caught an exception" % (ltpaId,repr(attrs1))
+            print("AdminConfig.modify(%s,%s) caught an exception" % (ltpaId,repr(attrs1)))
             raise
     else:
         raise "LTPA configId was not found"
@@ -6895,13 +6896,13 @@ def _getLDAPUserRegistryId():
     try:
         ldapObject = AdminConfig.list("LDAPUserRegistry")
         if len(ldapObject) == 0:
-            print "LDAPUserRegistry ConfigId was not found"
+            print("LDAPUserRegistry ConfigId was not found")
             return
         ldapUserRegistryId = _splitlines(ldapObject)[0]
         #print "Got LDAPUserRegistry ConfigId is " + ldapUserRegistryId
         return ldapUserRegistryId
     except:
-        print "AdminConfig.list('LDAPUserRegistry') caught an exception"
+        print("AdminConfig.list('LDAPUserRegistry') caught an exception")
         raise
     return
 
@@ -6911,13 +6912,13 @@ def _getLTPAId():
     try:
         ltpaObjects = AdminConfig.list("LTPA")
         if len(ltpaObjects) == 0:
-            print "LTPA ConfigId was not found"
+            print("LTPA ConfigId was not found")
             return
         ltpaId = _splitlines(ltpaObjects)[0]
         #print "Got LTPA ConfigId is " + ltpaId
         return ltpaId
     except:
-        print "AdminConfig.list('LTPA') caught an exception"
+        print("AdminConfig.list('LTPA') caught an exception")
         raise
         return None
 
@@ -6928,13 +6929,13 @@ def _getSecurityId():
         param = "/Cell:" + cellName + "/Security:/"
         secId = AdminConfig.getid(param)
         if len(secId) == 0:
-            print "Security ConfigId was not found"
+            print("Security ConfigId was not found")
             return None
 
         #print "Got Security ConfigId is " + secId
         return secId
     except:
-        print "AdminConfig.getid(%s) caught an exception" % param
+        print("AdminConfig.getid(%s) caught an exception" % param)
         return None
 
 def _doLDAPUserRegistry(ldapServerId,
@@ -7032,9 +7033,9 @@ def _doGlobalSecurity(java2security = "false"):
         try:
             AdminConfig.modify(securityId, attrs3)
         except:
-            print "AdminConfig.modify(%s,%s) caught an exception\n" % (securityId,repr(attrs3))
+            print("AdminConfig.modify(%s,%s) caught an exception\n" % (securityId,repr(attrs3)))
     else:
-        print "Any of the Security, LTPA or LDAPUserRegistry ConfigId was not found\n"
+        print("Any of the Security, LTPA or LDAPUserRegistry ConfigId was not found\n")
     return
 
 def enableLTPALDAPSecurity(server, port, baseDN,
@@ -7174,9 +7175,9 @@ def setAdminSecurityOff():
         try:
             AdminConfig.modify(securityId, attrs4)
         except:
-            print "AdminConfig.modify(%s,%s) caught an exception" % (securityId,repr(attrs4))
+            print("AdminConfig.modify(%s,%s) caught an exception" % (securityId,repr(attrs4)))
     else:
-        print "Security configId was not found"
+        print("Security configId was not found")
     return
 
 def updateWASPolicy(wasPolicyFilePath, localWASPolicy):
@@ -7194,8 +7195,8 @@ def updateWASPolicy(wasPolicyFilePath, localWASPolicy):
 
 def serverStatus():
     """Display the status of all nodes, servers, clusters..."""
-    print "Server status"
-    print "============="
+    print("Server status")
+    print("=============")
 
     nodes = _splitlines(AdminConfig.list( 'Node' ))
     for node_id in nodes:
@@ -7203,9 +7204,9 @@ def serverStatus():
         hostname = getNodeHostname(nodename)
         platform = getNodePlatformOS(nodename)
         if nodeIsDmgr(nodename):
-            print "NODE %s on %s (%s) - Deployment manager" % (nodename,hostname,platform)
+            print("NODE %s on %s (%s) - Deployment manager" % (nodename,hostname,platform))
         else:
-            print "NODE %s on %s (%s)" % (nodename,hostname,platform)
+            print("NODE %s on %s (%s)" % (nodename,hostname,platform))
             serverEntries = _splitlines(AdminConfig.list( 'ServerEntry', node_id ))
             for serverEntry in serverEntries:
                 sName = AdminConfig.showAttribute( serverEntry, "serverName" )
@@ -7213,13 +7214,13 @@ def serverStatus():
                 isRunning = isServerRunning(nodename,sName)
                 if isRunning: status = "running"
                 else: status = "stopped"
-                print "\t%-18s %-15s %s" % (sType,sName,status)
+                print("\t%-18s %-15s %s" % (sType,sName,status))
 
     appnames = listApplications()
-    print "APPLICATIONS:"
+    print("APPLICATIONS:")
     for a in appnames:
         if a != 'isclite' and a != 'filetransfer':
-            print "\t%s" % a
+            print("\t%s" % a)
 
 def setApplicationSecurity(onoff):
     """Turn application security on or off.
@@ -7237,9 +7238,9 @@ def setApplicationSecurity(onoff):
         try:
             AdminConfig.modify(securityId, attrs)
         except:
-            print "AdminConfig.modify(%s,%s) caught an exception" % (securityId, repr(attrs))
+            print("AdminConfig.modify(%s,%s) caught an exception" % (securityId, repr(attrs)))
     else:
-        print "Security configId was not found"
+        print("Security configId was not found")
     return
 
 def createThreadPool(nodename, servername, poolname, minThreads, maxThreads):
@@ -7284,7 +7285,7 @@ def saveAndSync():
 def saveAndSyncAndPrintResult():
     """Save config changes and sync them - prints save.result(0) on sync success, save.result(non-zero) on failure"""
     rc = saveAndSync()
-    print "save.result(%s)" % (rc)
+    print("save.result(%s)" % (rc))
 
 def save():
     """Save config changes and sync them - return 0 on sync success, non-zero on failure"""
@@ -7303,7 +7304,7 @@ def createEmptyBLA(blaname):
         AdminTask.createEmptyBLA('[-name %s]' % (blaname))
         return 0
     except:
-        print sys.exc_type, sys.exc_value
+        print(sys.exc_info()[0], sys.exc_info()[1])
         return -1
 
 def deleteBLA(blaname):
@@ -7414,7 +7415,7 @@ def deleteCompUnit(blaname,assetname):
         AdminTask.deleteCompUnit('[-blaID %s -cuID %s]' % (blaname, assetname))
         return 0
     except:
-        print sys.exc_type, sys.exc_value
+        print(sys.exc_info()[0], sys.exc_info()[1])
         return -1
 
 def importAsset(filepath):
@@ -7425,7 +7426,7 @@ def importAsset(filepath):
         AdminTask.importAsset('[-source %s -storageType FULL]' % (filepath))
         return 0
     except:
-        print sys.exc_type, sys.exc_value
+        print(sys.exc_info()[0], sys.exc_info()[1])
         return -1
 
 def doesAssetExist(filepath):
@@ -7455,10 +7456,10 @@ def assetExist(filename):
     """ number of assets found  """
     numofassets = len(assetlist)
     if numofassets!=0:
-        print
-        print "ERROR while importing file %s" % (filename)
-        print "Can't import and existing asset"
-        print
+        print()
+        print("ERROR while importing file %s" % (filename))
+        print("Can't import and existing asset")
+        print()
         sys.exit(1)
     else:
         return 0
@@ -7470,7 +7471,7 @@ def startBLA(name):
         AdminTask.startBLA('-blaID %s' % name)
         return 0
     except:
-        print sys.exc_type, sys.exc_value
+        print(sys.exc_info()[0], sys.exc_info()[1])
         return -1
 
 def stopBLA(name):
@@ -7480,7 +7481,7 @@ def stopBLA(name):
         AdminTask.stopBLA('-blaID ' + name)
         return 0
     except:
-        print sys.exc_type, sys.exc_value
+        print(sys.exc_info()[0], sys.exc_info()[1])
         return -1
 
 # BLA methods .... these are not tested or complete
@@ -7503,7 +7504,7 @@ def addBLAToCluster(name, source, clusterName):
       cuID = AdminTask.addCompUnit('[-blaID ' + blaID + ' -cuSourceID ' + assetID + ' -MapTargets [[.* cluster='+clusterName+']]]')
       save()
     except:
-      print 'Error adding CU to BLA on cluster. Exception information', sys.exc_type, sys.exc_value
+      print('Error adding CU to BLA on cluster. Exception information', sys.exc_info()[0], sys.exc_info()[1])
       return -1
     return 0
 
@@ -7526,7 +7527,7 @@ def addBLAToClusterWithOptions(name, source, clusterName, optionalArgs):
       cuID = AdminTask.addCompUnit('[-blaID ' + blaID + ' -cuSourceID ' + assetID + ' -MapTargets [[.* cluster='+clusterName+']]' + optionalArgs + ']')
       save()
     except:
-      print 'Error adding CU to BLA on cluster. Exception information', sys.exc_type, sys.exc_value
+      print('Error adding CU to BLA on cluster. Exception information', sys.exc_info()[0], sys.exc_info()[1])
       return -1
     return 0
 
@@ -7535,7 +7536,7 @@ def addBLAToClusterWithOptions(name, source, clusterName, optionalArgs):
 def grepTag(filepath, expression):
     """ search for a given pattern (expression) in a given file (filepath). Return 0 if the pattern was found, otherwise return 1 """
     command = "grep " + expression + " " + filepath
-    print command
+    print(command)
     tag = os.system(command)
     return tag
 
@@ -7555,13 +7556,13 @@ def viewFilters(cellname, nodename, proxyname, filterprotocol, filterpointname):
     """ Display a subset of filters and its ordinal values """
     typename = "ProxyServerFilterBean"
     mbean = AdminControl.queryNames('cell=%s,type=%s,node=%s,process=%s,*' % (cellname, typename, nodename, proxyname))
-    print AdminControl.invoke(mbean, 'viewFilters', '[%s %s]' % (filterprotocol, filterpointname))
+    print(AdminControl.invoke(mbean, 'viewFilters', '[%s %s]' % (filterprotocol, filterpointname)))
 
 def viewAllFilter(cellname,nodename,proxyname):
     """ Display the list of filters and its ordinal values """
     typename = "ProxyServerFilterBean"
     mbean = AdminControl.queryNames('cell=%s,type=%s,node=%s,process=%s,*' % (cellname,typename,nodename,proxyname))
-    print AdminControl.invoke(mbean,'viewAllFilters')
+    print(AdminControl.invoke(mbean,'viewAllFilters'))
 
 def modifyFilterOrdinal(cellname,nodename,proxyname,filtername,newordinal):
     """ Modify the ordinal of a custom filter. Return 0 if update succeeds, otherwise return -1 """
@@ -8573,7 +8574,7 @@ def extractCert(keyStoreName, cellName, nodeName, certPath, certAlias):
         AdminTask.extractCertificate('[-keyStoreName %s -keyStoreScope (cell):%s:(node):%s -certificateFilePath %s -certificateAlias %s]' % (keyStoreName,cellName,nodeName,certPath,certAlias))
         return 0
     except:
-        print 'Error exporting cert ', keyStoreName, '. Exception information ', sys.exc_type, sys.exc_value
+        print('Error exporting cert ', keyStoreName, '. Exception information ', sys.exc_info()[0], sys.exc_info()[1])
         return 1
 #endDef
 
@@ -8594,7 +8595,7 @@ def importCert(keyStoreName, cellName, nodeName, certPath, certAlias):
         AdminConfig.save()
         return 0
     except:
-        print 'Error importing cert ', keyStoreName, '. Exception information ', sys.exc_type, sys.exc_value
+        print('Error importing cert ', keyStoreName, '. Exception information ', sys.exc_info()[0], sys.exc_info()[1])
         return 1
 #endDef
 
@@ -8640,32 +8641,32 @@ def setCustomSecurityRolesandMap(app_name,mapuser1,mapuser2,appdeploy1="No",appd
 
 def setSecurityProperty ( propName, propValue ):
         global AdminConfig
-        print "Setting Security property"
+        print("Setting Security property")
 
-        print "Locating security configuration IDs ..."
+        print("Locating security configuration IDs ...")
         security = AdminConfig.list("Security" )
-        print "Locating the configuration IDs of all the properties in that security system ..."
+        print("Locating the configuration IDs of all the properties in that security system ...")
 
         props = AdminConfig.showAttribute(security, "properties" )
         properties = props[1:len(props)-1].split(" ")
 
-        print "Locating the property named "+propName+" ..."
+        print("Locating the property named "+propName+" ...")
         for property in properties:
                 name = AdminConfig.showAttribute(property, "name" )
                 if (propName == name):
                         prop = property
-                        print "Found it!"
+                        print("Found it!")
                 #endIf
         #endFor
 
         if (prop == ""):
-                print "No property named "+`propName`+" could be found!  Nothing to do!"
+                print("No property named "+repr(propName)+" could be found!  Nothing to do!")
         else:
-                print "Setting the value of the "+`propName`+" property to "+`propValue`+" ..."
+                print("Setting the value of the "+repr(propName)+" property to "+repr(propValue)+" ...")
                 value = ["value", propValue]
                 attrs = [value]
                 AdminConfig.modify(prop, attrs )
-                print "Done!"
+                print("Done!")
         #endElse
 #endDef
 
@@ -8817,12 +8818,12 @@ def createStringNameSpaceBinding(scope, bindingName, nameInNameSpace, stringToBi
 
     for ns in AdminConfig.list('StringNameSpaceBinding', scope).splitlines() :
         if bindingName == AdminConfig.showAttribute( ns, 'name' ):
-            print "The namespace binding %s already exist with nameInNameSpace %s and stringToBind %s." % (AdminConfig.showAttribute( ns, 'name' ), AdminConfig.showAttribute( ns, 'nameInNameSpace' ), AdminConfig.showAttribute( ns, 'stringToBind' ))
-            print "Overwriting with new values: nameInNameSpace %s, stringToBind %s." % (nameInNameSpace, stringToBind)
+            print("The namespace binding %s already exist with nameInNameSpace %s and stringToBind %s." % (AdminConfig.showAttribute( ns, 'name' ), AdminConfig.showAttribute( ns, 'nameInNameSpace' ), AdminConfig.showAttribute( ns, 'stringToBind' )))
+            print("Overwriting with new values: nameInNameSpace %s, stringToBind %s." % (nameInNameSpace, stringToBind))
             AdminConfig.modify(ns, [['nameInNameSpace', nameInNameSpace], ['stringToBind', stringToBind]])
             return
 
-    print "Creating new namespace binding."
+    print("Creating new namespace binding.")
     return AdminConfig.create("StringNameSpaceBinding", scope, [["name", bindingName], ["nameInNameSpace", nameInNameSpace], ["stringToBind", stringToBind]])
 
 ###############################################################################
