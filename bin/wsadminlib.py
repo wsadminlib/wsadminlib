@@ -3849,7 +3849,7 @@ def getDeploymentAutoStart(deploymentname,deploymenttargetname):
     return rc
 
 
-def getAdminAppViewValueList(appname, keyname):
+def getAdminAppViewList(appname, keyname):
     """ Returns a list of dictionaries reflecting the human readable output
         product by AdminApp.view. Each list element is a module returned by
         AdminApp.view, and the dictionary is the "meat" of the command output.
@@ -3861,7 +3861,7 @@ def getAdminAppViewValueList(appname, keyname):
     """
 
     getAdminAppViewValueList_REGEX = re.compile('^(\w+): (.+)')
-    m = "getAdminAppViewValueList"
+    m = "getAdminAppViewList"
     allmodules = []
     mymod = {}
     sawfirstmodule = False
