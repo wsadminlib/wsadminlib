@@ -3848,6 +3848,46 @@ def getDeploymentAutoStart(deploymentname,deploymenttargetname):
     sop(m,"Exit. Returning rc=%i" % ( rc ))
     return rc
 
+
+def getAdminAppViewValueList(appname, keyname):
+    """ Returns a list of dictionaries reflecting the human readable output
+        product by AdminApp.view. Each list element is a module returned by
+        AdminApp.view, and the dictionary is the "meat" of the command output.
+
+        Typical dictionary keys are Module, URI, and Server:
+          Module:  Archetype Created Web Application
+          URI:  guide-maven-multimodules-war-1.0-SNAPSHOT.war,WEB-INF/web.xml
+          Server:  WebSphere:cell=ndcell,node=node1,server=server1+WebSphere:cell=ndcell,node=node1,server=webserver1
+    """
+
+    getAdminAppViewValueList_REGEX = re.compile('^(\w+): (.+)')
+    m = "getAdminAppViewValueList"
+    allmodules = []
+    mymod = {}
+    sawfirstmodule = False
+
+    verboseString = AdminApp.view(appname, [keyname])
+    verboseStringList = _splitlines(verboseString)
+    for index,str in enumerate(verboseStringList):
+        sop(m, "str=>>>%s<<<" % ( str ))
+        if str.startswith("Module:"):
+            sawfirstmodule = True
+            sop(m, "found a module %s" %(str))
+            if (len(mymod) > 0):
+                allmodules.append(mymod)
+                mymod= {}
+        if (False == sawfirstmodule):
+            continue
+
+        matches = getAdminAppViewValueList_REGEX.match(str)
+        if (matches and len(matches.groups()) > 0):
+            sop(m, " add to dict %s->%s" %(matches.group(1), matches.group(2)))
+            mymod[matches.group(1)] = matches.group(2).strip()
+    if len(module):
+        allmodules.append(mymod)
+
+    return allmodules
+
 def getAdminAppViewValue(appname, keyname, parsename):
     """This helper method returns the value for the specified application
     and key name, as fetched by AdminApp.view().
@@ -3868,7 +3908,11 @@ def getAdminAppViewValue(appname, keyname, parsename):
         Context Root:  wussmaster
     This method returns a short string useful programmatically.
 
-    Returns None if trouble is encountered."""
+    Returns None if trouble is encountered.
+
+    Note: this method only returns the data from the first module of the
+    application printed by AdminApp.view().
+    """
     m = "getAdminAppViewValue:"
     sop(m,"Entry. appname=%s keyname=%s parsename=%s" % ( appname, keyname, parsename ))
 
